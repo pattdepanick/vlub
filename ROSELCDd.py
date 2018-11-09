@@ -6,6 +6,9 @@ import signal
 import time
 import unicodedata
 import re
+from io import BytesIO
+from urllib2 import Request, urlopen, URLError
+
 LVUBINITTIMEOUT = 5
 
 from lcdbackpack import LcdBackpack
@@ -28,20 +31,64 @@ class LVUBSong:
 	def __init__(self,player):
 		
 		if player.state == 'play':
-			self.title = unicodedata.normalize('NFKD',player.currentsong()['title']).encode('ascii','ignore')
-			self.album = unicodedata.normalize('NFKD',player.currentsong()['album']).encode('ascii','ignore')
-			self.artist = unicodedata.normalize('NFKD',player.currentsong()['artist']).encode('ascii','ignore')
-			bitrate = str(player.player.status()['audio'])
-			m = re.search(r'([1-9]+)000:([1-9][0-9]):.*', bitrate)
-			self.bitrate = m.group(1)+' KHz|'+m.group(2)+' bits'
-			self.duration = player.currentsong()['duration']
-			self.source = unicodedata.normalize('NFKD',player.currentsong()['file']).encode('ascii','ignore')
+			try:
+				self.title = unicodedata.normalize('NFKD',player.currentsong()['title']).encode('ascii','ignore')
+			except KeyError:
+				self.title = 'Empty title'
+			try:
+				self.album = unicodedata.normalize('NFKD',player.currentsong()['album']).encode('ascii','ignore')
+			except KeyError:
+				self.album = 'Empty album'
+			try:
+				self.artist = unicodedata.normalize('NFKD',player.currentsong()['artist']).encode('ascii','ignore')
+			except KeyError:
+				self.artist = 'Empty artist'
+			try:
+				bitrate = str(player.player.status()['audio'])
+			except KeyError:
+				bitrate = '0000:00:0'
+			print('Found bitrate: %s'%bitrate)
+			m = re.search(r'([1-9]+)[0-9]00:([1-9][0-9]):.*', bitrate)
+			if m == None:
+				self.bitrate = '0000:00:0'
+			else:
+				self.bitrate = m.group(1)+' KHz|'+m.group(2)+' bits'
+			try:
+				self.duration = player.currentsong()['duration']
+			except KeyError:
+				self.duration = 0
+			try:
+				self.url = unicodedata.normalize('NFKD',player.currentsong()['file']).encode('ascii','ignore')
+			except KeyError:
+				self.url = 'Empty url'
+			m = re.search(r'^http[s]*://',self.url)
+			if m == None:
+				# It's a file
+				self.source = 'file'
+			else:
+				self.source = 'webradio'
+				req = Request(self.url)
+				try:
+					response = urlopen(req)
+				except HTTPError as e:
+					print 'The server couldn\'t fulfill the request.'
+					print 'Error code: ', e.code
+				except URLError as e:
+					print 'We failed to reach a server.'
+					print 'Reason: ', e.reason
+				else:
+					# everything is fine
+					self.artist = response.info()['icy-name']
+					self.album = 'WebRadio'
+					print('webradio: %s'%self.artist)
+
 		elif player.state == 'stop':
 			self.title = "Choose now"
 			self.album = "Status stopped"
 			self.artist = "Musical Streamer"
 			self.bitrate = "Some good music"
 			self.duration = 0
+			self.url = ""
 			self.source = ""
 		elif player.state == 'pause':
 			self.title = "Waiting for"
@@ -49,7 +96,9 @@ class LVUBSong:
 			self.artist = "Musical Streamer"
 			self.bitrate = "Some good music"
 			self.duration = 0
+			self.url = ""
 			self.source = ""
+
 		else:
 			print('Player in mode: %s'%str(player.state))
 			self.title = "Waiting for"
@@ -57,13 +106,9 @@ class LVUBSong:
 			self.artist = "Musical Streamer"
 			self.bitrate = "Some good music"
 			self.duration = 0
+			self.url = ""
 			self.source = ""
 
-class LVUBSongRadio(LVUBSong):
-	pass
-	
-class LVUBSongFile(LVUBSong):
-	pass
 	
 class LVUBPlayer(MPDClient):
 	def __init__(self):
@@ -72,6 +117,7 @@ class LVUBPlayer(MPDClient):
 		client.use_unicode = True          # Can be switched back later
 		client.idletimeout = None          # timeout for fetching the result of the idle command is handled seperately, default:$
 		client.connect(HOST, PORT)
+		# Required so that fetch/send_idle methods work on a LVUBPlayer object
 		for atr in dir(client):
 			if atr[:1] == '_' and atr[1:2] != '_':
 				setattr(self, atr, getattr(client,atr))
@@ -113,21 +159,9 @@ class LVUBScreen:
 		self.lcd.clear()
 		print("Screen %d created - %dX%d on %s at %d"%(id,columns,lines,port,speed))
 		self.lcd.write("Musical streamerStarting on %d"%self.id)
-		
-	# We need a function to display a text on a line
-	# centered and truncated if needed to columns chars
-	#def display_ct(self,line,text):
-	#	output = text.center(self.columns, ' ')
-	#	self.lcd.clear()
-	#	self.lcd.set_cursor_position(1,line)
-	#	if len(output) > self.columns:
-	#		self.lcd.write(output[:self.columns-3:]+'...')			
-	#	else:
-	#		self.lcd.write(output)
 	
 	def display_ct(self,line,text):
 		output = text.center(self.columns, ' ')
-		#self.lcd.clear()
 		self.lcd.set_cursor_position(1,line)
 		
 		if len(output) > self.columns:
@@ -153,9 +187,9 @@ class LVUBDisplay:
 			pass
 		if self.nb == 2:
 			s = LVUBSong(player)
-			print('Song created',s.artist, s.album, s.title, s.bitrate)
+			# TODO: externalyze in a table the allocation of fields into spaces
+			print('Song created',s.artist, s.album, s.title, s.bitrate, s.url)
 			self.screens[0].display_ct(1,s.artist)
-			self.screens[0].display_ct(2,s.album)
 			self.screens[0].display_ct(2,s.album)
 			self.screens[1].display_ct(1,s.title)
 			self.screens[1].display_ct(2,s.bitrate)
