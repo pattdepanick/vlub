@@ -1,0 +1,11 @@
+[Unit]
+Description=VoolumIO startup script
+After=network.target mpd.service
+
+[Service]
+ExecStart=/home/volumio/ROSELCDd.sh
+KillMode=process
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target

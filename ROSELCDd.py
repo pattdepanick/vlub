@@ -1,17 +1,28 @@
 #!/usr/bin/python2
 # -*- coding: utf8 -*-
 
+import sys
+import signal
 import time
 LVUBINITTIMEOUT = 5
 
 from lcdbackpack import LcdBackpack
 from mpd import MPDClient
 
+
 # We have 2 LCD displays of 2 lines of 16 columns
 LVUBSCREENS = 2
 LVUBROWS = 2
 LVUBCOLUMNS = 16
 LVUBSPEED = 115200
+
+#MPD CLient Connection Settings
+HOST = 'localhost'
+PORT = '6600'
+PASSWORD = False
+##
+CON_ID = {'host':HOST, 'port':PORT}
+
 	
 class LVUBSong:
 	def __init__(self,player):
@@ -20,7 +31,7 @@ class LVUBSong:
 			self.title = player.currentsong()['title']
 			self.album = player.currentsong()['album']
 			self.artist = player.currentsong()['artist']
-			self.bitrate = player.currentsong()['audio']
+			self.bitrate = player.status()['audio']
 			self.duration = player.currentsong()['duration']
 			self.source = player.currentsong()['file']
 		elif player.status == 'stop':
@@ -55,16 +66,29 @@ class LVUBPlayer:
 	def __init__(self):
 		client = MPDClient()               # create client object
 		client.timeout = None              # network timeout in seconds (floats allowed), default: None
+		client.use_unicode = True          # Can be switched back later
 		client.idletimeout = None          # timeout for fetching the result of the idle command is handled seperately, default:$
 		client.connect("localhost", 6600)  # connect to localhost:6600
 		self.player = client
 		
 	def status(self):
-		stat = [ 'play', 'stop', 'pause' ]
+		#stat = [ 'play', 'stop', 'pause', 'addtagid', 'prio', 'move', 'setvol', 'kill', 'find', 'listallinfo', 'previous', 'mixrampdb', 'listplaylistinfo', 'pause', 'toggleoutput', 'add', 'swap','plchangesposid', 'save', 'seekid', 'random', 'playlistsearch', 'stop', 'playlistfind', 'sendmessage', 'password', 'listall', 'playlistclear', 'config', 'list','listplaylists', 'clearerror', 'tagtypes', 'searchaddpl', 'playid', 'close', 'replay_gain_mode', 'stats', 'enableoutput', 'mixrampdelay', 'rm', 'lsinfo', 'swapid','urlhandlers', 'addid', 'search', 'disableoutput', 'playlistid', 'findadd', 'prioid', 'load', 'shuffle', 'consume', 'rangeid', 'rescan', 'channels', 'subscribe','crossfade', 'playlistinfo', 'replay_gain_status', 'readmessages', 'playlist', 'notcommands', 'next', 'listplaylist', 'playlistadd', 'outputs', 'commands','unsubscribe', 'currentsong', 'count', 'searchadd', 'cleartagid', 'seekcur', 'mount', 'idle', 'playlistmove', 'readcomments', 'delete', 'rename', 'decoders','single', 'listfiles', 'seek', 'ping', 'listmounts', 'status', 'play', 'repeat', 'update', 'plchanges', 'playlistdelete', 'clear', 'moveid', 'deleteid' ]
+		stat = [ 'play', 'stop', 'pause']
 		if self.player.status()['state'] not in stat:
 			self.player.disconnect()
-			self.player.connect("localhost", 6600)	
-		return self.player.status()['state']
+			self.player.connect("localhost", 6600)
+			mystate = 'maintenance'
+		else
+			mystate = self.player.status()['state']
+		print("Player State :  %s "%mystate)
+		return mystate
+		
+	#def status(self,player,mixer,playlist,database,update,scan,output,options,sticker):
+	#	stat = [ 'play', 'stop', 'pause' ]
+	#	if status.player()['state'] not in stat:
+	#		client.disconnect()
+	#		client.connect("localhost", 6600)	
+	#	return status()['state']
 		
 	def __del__(self):
 		self.player.disconnect() 
