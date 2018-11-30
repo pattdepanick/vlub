@@ -3,7 +3,7 @@ Description=VoolumIO startup script
 After=network.target mpd.service
 
 [Service]
-ExecStart=/home/volumio/ROSELCDd.sh
+ExecStart=/home/volumio/ROSELCDd.py
 KillMode=process
 Restart=on-failure
 
