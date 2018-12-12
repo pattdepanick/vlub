@@ -31,6 +31,7 @@ LVUBPASSWORD = False
 class LVUBSong:
 	def __init__(self,player):
 		
+		print("Creating object LVUBSong with player state",player.state)
 		if player.state == 'play':
 			try:
 				self.title = unicodedata.normalize('NFKD',player.currentsong()['title']).encode('ascii','ignore')
@@ -141,6 +142,7 @@ class LVUBSong:
 	
 class LVUBPlayer(MPDClient):
 	def __init__(self):
+		print("Creating object LVUBPplayer on %s:%s"%(LVUBHOST,LVUBPORT))
 		client = MPDClient()               # create client object
 		client.timeout = None              # network timeout in seconds (floats allowed), default: None
 		client.use_unicode = True          # Can be switched back later
@@ -152,6 +154,7 @@ class LVUBPlayer(MPDClient):
 				setattr(self, atr, getattr(client,atr))
 		self.player = client
 		self.state = str(self.player.status()['state'])
+		print("LVUBPplayer has state ",self.state)
 		
 	def get_status(self):
 		#stat = [ 'play', 'stop', 'pause', 'addtagid', 'prio', 'move', 'setvol', 'kill', 'find', 'listallinfo', 'previous', 'mixrampdb', 'listplaylistinfo', 'pause', 'toggleoutput', 'add', 'swap','plchangesposid', 'save', 'seekid', 'random', 'playlistsearch', 'stop', 'playlistfind', 'sendmessage', 'password', 'listall', 'playlistclear', 'config', 'list','listplaylists', 'clearerror', 'tagtypes', 'searchaddpl', 'playid', 'close', 'replay_gain_mode', 'stats', 'enableoutput', 'mixrampdelay', 'rm', 'lsinfo', 'swapid','urlhandlers', 'addid', 'search', 'disableoutput', 'playlistid', 'findadd', 'prioid', 'load', 'shuffle', 'consume', 'rangeid', 'rescan', 'channels', 'subscribe','crossfade', 'playlistinfo', 'replay_gain_status', 'readmessages', 'playlist', 'notcommands', 'next', 'listplaylist', 'playlistadd', 'outputs', 'commands','unsubscribe', 'currentsong', 'count', 'searchadd', 'cleartagid', 'seekcur', 'mount', 'idle', 'playlistmove', 'readcomments', 'delete', 'rename', 'decoders','single', 'listfiles', 'seek', 'ping', 'listmounts', 'status', 'play', 'repeat', 'update', 'plchanges', 'playlistdelete', 'clear', 'moveid', 'deleteid' ]
@@ -162,7 +165,7 @@ class LVUBPlayer(MPDClient):
 			mystate = 'maintenance'
 		else:
 			mystate = str(self.player.status()['state'])
-		print("Player State :  %s "%mystate)
+		print("Player State: %s "%mystate)
 		self.state = mystate
 		return mystate
 		
@@ -170,14 +173,17 @@ class LVUBPlayer(MPDClient):
 		self.player.disconnect() 
 		
 	def send_idle(self):
+		print("send_idle called")
 		super(LVUBPlayer, self).send_idle()
 		
 	def fetch_idle(self):
+		print("fetch_idle called")
 		super(LVUBPlayer, self).fetch_idle()
 		self.get_status()
 
 class LVUBScreen:
 	def __init__(self,id,lines,columns,port,speed):
+		print("Creating object LVUBScreen %s",id)
 		self.id = id
 		self.lines = lines
 		self.columns = columns
@@ -206,7 +212,7 @@ class LVUBDisplay:
 		# nb equal the number of screens so starts at 1
 		self.nb = len(screens)
 		self.screens = screens
-		print("Display created with %d screens"%(self.nb))
+		print("Creating object LVUBDisplay with %d screens"%(self.nb))
 
 	def display_song(self,player):
 		# Some logic is needed here
