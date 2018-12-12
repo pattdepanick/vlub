@@ -3,9 +3,15 @@ Description=VoolumIO startup script
 After=network.target mpd.service
 
 [Service]
+User=volumio
+Group=volumio
+UMask=007
 ExecStart=/home/volumio/ROSELCDd.py
+ExecReload=/bin/kill -HUP $MAINPID
 KillMode=process
 Restart=on-failure
+# Configures the time to wait before service is stopped forcefully.
+TimeoutStopSec=30
 
 [Install]
 WantedBy=multi-user.target
