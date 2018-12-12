@@ -1,5 +1,5 @@
 [Unit]
-Description=VoolumIO startup script
+Description=Volumio LCD startup script
 After=network.target mpd.service
 
 [Service]
