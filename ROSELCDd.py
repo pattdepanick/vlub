@@ -6,6 +6,7 @@ import signal
 import time
 import unicodedata
 import re
+import json
 from io import BytesIO
 from urllib2 import Request, urlopen, URLError
 
@@ -44,6 +45,10 @@ class LVUBSong:
 			except KeyError:
 				self.artist = 'Empty artist'
 			try:
+				self.trackType = unicodedata.normalize('NFKD',player.currentsong()['trackType']).encode('ascii','ignore')
+			except KeyError:
+				self.trackType = 'Empty tracktype'
+			try:
 				bitrate = str(player.player.status()['audio'])
 			except KeyError:
 				bitrate = '0000:00:0'
@@ -61,6 +66,7 @@ class LVUBSong:
 				self.url = unicodedata.normalize('NFKD',player.currentsong()['file']).encode('ascii','ignore')
 			except KeyError:
 				self.url = 'Empty url'
+			print("URL:",self.url)
 			m = re.search(r'^http[s]*://',self.url)
 			if m == None:
 				# It's a file
@@ -78,8 +84,31 @@ class LVUBSong:
 					print 'Reason: ', e.reason
 				else:
 					# everything is fine
-					self.artist = response.info()['icy-name']
 					self.album = 'WebRadio'
+					try:
+						self.artist = response.info()['icy-name']
+					except:
+						m = re.search(r'qobuz.com',self.url)
+						if m == None:
+							self.artist = 'Unknown'
+						else:
+							self.artist = 'Qobuz'
+							self.album = 'Empty Artist'
+							# In the URL we have eid=<ongid> we can use to query /data/queue
+							m = re.search('(?<=eid=)([0-9]+)',self.url)
+							print("EID:",m.group(0))
+							with open('/data/queue') as handle:
+									dictdump = json.loads(handle.read())
+							for s in dictdump:
+								print(s['uri'])
+								m1 = re.search(r'/'+re.escape(m.group(0)),s['uri'])
+								if m1 == None:
+									pass
+								else:
+									self.album = s['album'].encode('ascii','ignore')
+									self.artist = s['artist'].encode('ascii','ignore')
+									self.title = s['title'].encode('ascii','ignore')
+									break
 					print('webradio: %s'%self.artist)
 
 		elif player.state == 'stop':
