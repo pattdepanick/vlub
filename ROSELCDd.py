@@ -22,9 +22,9 @@ LVUBCOLUMNS = 16
 LVUBSPEED = 115200
 
 #MPD CLient Connection Settings
-HOST = 'localhost'
-PORT = '6600'
-PASSWORD = False
+LVUBHOST = 'localhost'
+LVUBPORT = '6600'
+LVUBPASSWORD = False
 ##
 	
 class LVUBSong:
@@ -116,7 +116,7 @@ class LVUBPlayer(MPDClient):
 		client.timeout = None              # network timeout in seconds (floats allowed), default: None
 		client.use_unicode = True          # Can be switched back later
 		client.idletimeout = None          # timeout for fetching the result of the idle command is handled seperately, default:$
-		client.connect(HOST, PORT)
+		client.connect(LVUBHOST, LVUBPORT)
 		# Required so that fetch/send_idle methods work on a LVUBPlayer object
 		for atr in dir(client):
 			if atr[:1] == '_' and atr[1:2] != '_':
@@ -129,7 +129,7 @@ class LVUBPlayer(MPDClient):
 		stat = [ 'play', 'stop', 'pause']
 		if self.player.status()['state'] not in stat:
 			self.player.disconnect()
-			self.player.connect(HOST, PORT)
+			self.player.connect(LVUBHOST, LVUBPORT)
 			mystate = 'maintenance'
 		else:
 			mystate = str(self.player.status()['state'])
