@@ -18,7 +18,8 @@ systemctl disable volumio-kiosk
 # Setup ROSELCD
 #dos2unix /home/volumio/vlub/ROSELCDd.py
 chmod 755 /home/volumio/vlub/ROSELCDd.py
-ln -sf /home/volumio/vlub/volumio-lcd.service /etc/systemd/system
+#ln -sf /home/volumio/vlub/volumio-lcd.service /lib/systemd/system
+cp -a /home/volumio/vlub/volumio-lcd.service /lib/systemd/system
 systemctl enable volumio-lcd
 systemctl start volumio-lcd
 #reboot
