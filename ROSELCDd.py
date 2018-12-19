@@ -7,6 +7,7 @@ import time
 import unicodedata
 import re
 import json
+import platform
 from io import BytesIO
 #from urllib2 import requests, urlopen, URLError, HTTPError;
 import requests
@@ -250,8 +251,8 @@ class LVUBScreen:
 		self.lcd.connect()
 		self.lcd.clear()
 		print("Screen %d created - %dX%d on %s at %d"%(id,columns,lines,port,speed))
-		self.lcd.write("Musical streamerStarting on %d"%self.id)
 	
+	# Display centered
 	def display_ct(self,line,text):
 		output = text.center(self.columns, ' ')
 		self.lcd.set_cursor_position(1,line)
@@ -262,7 +263,6 @@ class LVUBScreen:
 			self.lcd.write(output)
 		
 	def __del__(self):
-		self.lcd.write("Musical streamerShutting down %d "%self.id)
 		self.lcd.disconnect()
 		
 class LVUBDisplay:
@@ -270,8 +270,26 @@ class LVUBDisplay:
 		# nb equal the number of screens so starts at 1
 		self.nb = len(screens)
 		self.screens = screens
+		self.name = str(platform.node())
 
-		print("Creating object LVUBDisplay with %d screens"%(self.nb))
+		print("Creating object LVUBDisplay (%s) with %d screens"%(self.name,self.nb))
+		for i in range(0,self.nb):
+			if i == 0:
+				name = self.name
+			else:
+				name = "Musical streamer"
+			self.screens[i].display_ct(1,name)
+			self.screens[i].display_ct(2,"Starting on %d"%i)
+
+	def __del__(self):
+		for i in range(0,self.nb):
+			if i == 0:
+				name = self.name
+			else:
+				name = "Musical streamer"
+			print("Display name (%d) is : %s",(i,name))
+			self.screens[i].display_ct(1,name)
+			self.screens[i].display_ct(2,"Shutting down %d"%i)
 
 			
 # To display a specific string at startup
@@ -280,6 +298,10 @@ init = True
 # Our LCD/OLED/... Display
 s0 = LVUBScreen(0, LVUBROWS, LVUBCOLUMNS, "/dev/ttyACM0", LVUBSPEED)
 s1 = LVUBScreen(1, LVUBROWS, LVUBCOLUMNS, "/dev/ttyACM1", LVUBSPEED)
+# test with two screens
+d = LVUBDisplay(s0, s1)
+# test with one screen only
+#d = LVUBDisplay(s0)
 time.sleep(LVUBINITTIMEOUT)
 
 #s0.display_ct(1,"Salut Fredo xxxxxxxxx")
@@ -287,10 +309,6 @@ time.sleep(LVUBINITTIMEOUT)
 
 # Talking to our MDP daemon
 p = LVUBPlayer()
-# test with two screens
-d = LVUBDisplay(s0, s1)
-# test with one screen only
-#d = LVUBDisplay(s0)
 s = LVUBSong(p)
 
 #display info
