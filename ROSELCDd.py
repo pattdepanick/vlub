@@ -22,6 +22,10 @@ LVUBSCREENS = 2
 LVUBROWS = 2
 LVUBCOLUMNS = 16
 LVUBSPEED = 115200
+# Loop every second by default
+LVUBLOOP = 1
+# If one screen flip between metadata every 5 seconds by default
+LVUBFLIP = 5
 
 #Volmuio CLient Connection Settings
 LVUBHOST = 'localhost'
@@ -34,11 +38,23 @@ LVUBMPDPASSWORD = False
 	
 class LVUBSong:
 	def __init__(self,player):
-		
+
 		print("Creating object LVUBSong with player state",player.state)
+		# elapsed time
+		self.et = 0
+		# Mode in which we display metatdata if one screen
+		self.flag = True
+		self.title = ''
+		self.oldtitle = 'old'
+
+	def display(self,player,lcds):
 		player.get_status()
 		if player.state == 'play':
+			self.oldtitle = self.title
 			self.title = player.title
+			# Reset elapsed time as we changed song
+			if self.oldtitle != self.title:
+				self.et = 0
 			self.album = player.album
 			self.artist = player.artist
 			self.service = player.service
@@ -91,8 +107,31 @@ class LVUBSong:
 			self.duration = 0
 			self.url = ""
 			self.service = ""
+		print('Song created',self.artist, self.album, self.title, self.bitrate, self.url)
 
-	
+		# Handle monoscreen case
+		if self.et%LVUBFLIP == 0:
+			self.flag = not self.flag
+		# As we loop every LVUBLOOP seconds
+		self.et += LVUBLOOP
+
+		if lcds.nb == 1:
+			# If we have 1 screen, we limit the display to title and artist (later rotate with album and bit rate)
+			if self.flag:
+				lcds.screens[0].display_ct(1,s.artist)
+				lcds.screens[0].display_ct(2,s.album)
+			else:
+				lcds.screens[0].display_ct(1,s.title)
+				lcds.screens[0].display_ct(2,s.bitrate)
+
+		if lcds.nb == 2:
+			# If we have 2 screens, we limit the display to title and artist + album and bit rate
+			# TODO: externalyze in a table the allocation of fields into spaces
+			lcds.screens[0].display_ct(1,s.artist)
+			lcds.screens[0].display_ct(2,s.album)
+			lcds.screens[1].display_ct(1,s.title)
+			lcds.screens[1].display_ct(2,s.bitrate)
+
 class LVUBPlayer():
 
 	def __init__(self):
@@ -230,22 +269,9 @@ class LVUBDisplay:
 		# nb equal the number of screens so starts at 1
 		self.nb = len(screens)
 		self.screens = screens
+
 		print("Creating object LVUBDisplay with %d screens"%(self.nb))
 
-	def display_song(self,player):
-		# Some logic is needed here
-		# If we have 1 screen, we limit the display to title and artist (later rotate with album and bit rate)
-		# If we have 2 screens, we limit the display to title and artist + album and bit rate
-		if self.nb == 1:
-			pass
-		if self.nb == 2:
-			s = LVUBSong(player)
-			# TODO: externalyze in a table the allocation of fields into spaces
-			print('Song created',s.artist, s.album, s.title, s.bitrate, s.url)
-			self.screens[0].display_ct(1,s.artist)
-			self.screens[0].display_ct(2,s.album)
-			self.screens[1].display_ct(1,s.title)
-			self.screens[1].display_ct(2,s.bitrate)
 			
 # To display a specific string at startup
 init = True
@@ -260,11 +286,15 @@ time.sleep(LVUBINITTIMEOUT)
 
 # Talking to our MDP daemon
 p = LVUBPlayer()
+# test with two screens
 d = LVUBDisplay(s0, s1)
+# test with one screen only
+#d = LVUBDisplay(s0)
+s = LVUBSong(p)
 
 #display info
 # We're a daemon, so loop forever
 while True:
 	# display info
-	d.display_song(p)
-	time.sleep(1)
+	s.display(p,d)
+	time.sleep(LVUBLOOP)
