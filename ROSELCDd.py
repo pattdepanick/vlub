@@ -8,7 +8,8 @@ import unicodedata
 import re
 import json
 from io import BytesIO
-from urllib2 import Request, urlopen, URLError
+#from urllib2 import requests, urlopen, URLError, HTTPError;
+import requests
 
 LVUBINITTIMEOUT = 5
 
@@ -22,95 +23,47 @@ LVUBROWS = 2
 LVUBCOLUMNS = 16
 LVUBSPEED = 115200
 
-#MPD CLient Connection Settings
+#Volmuio CLient Connection Settings
 LVUBHOST = 'localhost'
-LVUBPORT = '6600'
-LVUBPASSWORD = False
+LVUBPORT = '3000'
+#MPD CLient Connection Settings
+LVUBMPDHOST = 'localhost'
+LVUBMPDPORT = '6600'
+LVUBMPDPASSWORD = False
 ##
 	
 class LVUBSong:
 	def __init__(self,player):
 		
 		print("Creating object LVUBSong with player state",player.state)
+		player.get_status()
 		if player.state == 'play':
-			try:
-				self.title = unicodedata.normalize('NFKD',player.currentsong()['title']).encode('ascii','ignore')
-			except KeyError:
-				self.title = 'Empty title'
-			try:
-				self.album = unicodedata.normalize('NFKD',player.currentsong()['album']).encode('ascii','ignore')
-			except KeyError:
-				self.album = 'Empty album'
-			try:
-				self.artist = unicodedata.normalize('NFKD',player.currentsong()['artist']).encode('ascii','ignore')
-			except KeyError:
-				self.artist = 'Empty artist'
-			try:
-				self.trackType = unicodedata.normalize('NFKD',player.currentsong()['trackType']).encode('ascii','ignore')
-			except KeyError:
-				self.trackType = 'Empty tracktype'
-			try:
-				bitrate = str(player.player.status()['audio'])
-			except KeyError:
-				bitrate = '0000:00:0'
-			print('Found bitrate: %s'%bitrate)
-			m = re.search(r'([1-9]+)[0-9]00:([1-9][0-9]):.*', bitrate)
-			if m == None:
-				self.bitrate = '0000:00:0'
+			self.title = player.title
+			self.album = player.album
+			self.artist = player.artist
+			self.service = player.service
+			if player.samplerate != '' and player.bitdepth != '':
+				self.bitrate = player.samplerate+"|"+player.bitdepth+'s'
 			else:
-				self.bitrate = m.group(1)+' KHz|'+m.group(2)+' bits'
-			try:
-				self.duration = player.currentsong()['duration']
-			except KeyError:
-				self.duration = 0
-			try:
-				self.url = unicodedata.normalize('NFKD',player.currentsong()['file']).encode('ascii','ignore')
-			except KeyError:
-				self.url = 'Empty url'
-			print("URL:",self.url)
-			m = re.search(r'^http[s]*://',self.url)
-			if m == None:
-				# It's a file
-				self.source = 'file'
-			else:
-				self.source = 'webradio'
-				req = Request(self.url)
-				try:
-					response = urlopen(req)
-				except HTTPError as e:
-					print 'The server couldn\'t fulfill the request.'
-					print 'Error code: ', e.code
-				except URLError as e:
-					print 'We failed to reach a server.'
-					print 'Reason: ', e.reason
-				else:
-					# everything is fine
-					self.album = 'WebRadio'
+				# volumio doesn't provide samplerate for webradio
+				if self.service == 'webradio':
+					mpd = LVUBMPDPlayer()
 					try:
-						self.artist = response.info()['icy-name']
-					except:
-						m = re.search(r'qobuz.com',self.url)
-						if m == None:
-							self.artist = 'Unknown'
-						else:
-							self.artist = 'Qobuz'
-							self.album = 'Empty Artist'
-							# In the URL we have eid=<ongid> we can use to query /data/queue
-							m = re.search('(?<=eid=)([0-9]+)',self.url)
-							print("EID:",m.group(0))
-							with open('/data/queue') as handle:
-									dictdump = json.loads(handle.read())
-							for s in dictdump:
-								print(s['uri'])
-								m1 = re.search(r'/'+re.escape(m.group(0)),s['uri'])
-								if m1 == None:
-									pass
-								else:
-									self.album = s['album'].encode('ascii','ignore')
-									self.artist = s['artist'].encode('ascii','ignore')
-									self.title = s['title'].encode('ascii','ignore')
-									break
-					print('webradio: %s'%self.artist)
+						bitrate = str(mpd.player.status()['audio'])
+					except KeyError:
+						bitrate = '0000:00:0'
+					print('Found bitrate: %s'%bitrate)
+					m = re.search(r'([1-9]+)[0-9]00:([1-9][0-9]):.*', bitrate)
+					if m == None:
+						self.bitrate = '0000:00:0'
+					else:
+						self.bitrate = m.group(1)+' KHz|'+m.group(2)+' bits'
+					mpd.__del__()
+				else:
+					self.bitrate = 'Empty bitrate'
+			self.duration = player.duration
+			self.url = player.uri
+			print("URL:",self.url)
 
 		elif player.state == 'stop':
 			self.title = "Choose now"
@@ -119,7 +72,7 @@ class LVUBSong:
 			self.bitrate = "Some good music"
 			self.duration = 0
 			self.url = ""
-			self.source = ""
+			self.service = ""
 		elif player.state == 'pause':
 			self.title = "Waiting for"
 			self.album = "Status paused"
@@ -127,7 +80,7 @@ class LVUBSong:
 			self.bitrate = "Some good music"
 			self.duration = 0
 			self.url = ""
-			self.source = ""
+			self.service = ""
 
 		else:
 			print('Player in mode: %s'%str(player.state))
@@ -137,17 +90,82 @@ class LVUBSong:
 			self.bitrate = "Some good music"
 			self.duration = 0
 			self.url = ""
-			self.source = ""
+			self.service = ""
 
 	
-class LVUBPlayer(MPDClient):
+class LVUBPlayer():
+
 	def __init__(self):
 		print("Creating object LVUBPplayer on %s:%s"%(LVUBHOST,LVUBPORT))
+		self.state = "init"
+
+	def get_status(self):
+		# Possible status for volumio
+		stat = [ 'play', 'stop', 'pause']
+		try:
+			req = requests.get("http://"+LVUBHOST+":"+LVUBPORT+"/api/v1/getstate")
+			print ("Return code: ",req.status_code)
+		except:
+			print 'We failed to reach a server.'
+		else:
+			# For successful API call, response code will be 200 (OK)
+			if (req.ok):
+    				# Loading the response data into a dict variable
+    				data = json.loads(req.content)
+				self.state = str(data['status'])
+				print('TYPE: %s',type(data['title']))
+				try:
+					self.service = str(data['service'])
+				except:
+					try:
+						self.service = str(data['trackType'])
+					except:
+						self.service = ''
+				try:
+					self.title = unicodedata.normalize('NFKD',data['title']).encode('ascii','ignore')
+				except:
+					self.title = "Empty Title"
+				try:
+					self.artist = unicodedata.normalize('NFKD',data['artist']).encode('ascii','ignore')
+				except:
+					self.artist = "Empty Artist"
+				try:
+					self.album = unicodedata.normalize('NFKD',data['album']).encode('ascii','ignore')
+				except:
+					if self.service != '':
+						self.album = self.service
+					else:
+						self.album = "Empty Album"
+				self.uri = unicodedata.normalize('NFKD',data['uri']).encode('ascii','ignore')
+				try:
+					self.duration = str(data['duration'])
+				except:
+					self.duration = 0
+				try:
+					self.samplerate = str(data['samplerate'])
+				except:
+					self.samplerate = ""
+				try:
+					self.bitdepth = str(data['bitdepth'])
+				except:
+					self.bitdepth = ""
+				print("LVUBPplayer has state ",self.state)
+				if self.state not in stat:
+					mystate = 'maintenance'
+				else:
+					mystate = self.state
+				print("Player State: %s "%mystate)
+				self.state = mystate
+				return mystate
+		
+class LVUBMPDPlayer(MPDClient):
+	def __init__(self):
+		print("Creating object LVUBPplayer on %s:%s"%(LVUBMPDHOST,LVUBMPDPORT))
 		client = MPDClient()               # create client object
 		client.timeout = None              # network timeout in seconds (floats allowed), default: None
 		client.use_unicode = True          # Can be switched back later
 		client.idletimeout = None          # timeout for fetching the result of the idle command is handled seperately, default:$
-		client.connect(LVUBHOST, LVUBPORT)
+		client.connect(LVUBMPDHOST, LVUBMPDPORT)
 		# Required so that fetch/send_idle methods work on a LVUBPlayer object
 		for atr in dir(client):
 			if atr[:1] == '_' and atr[1:2] != '_':
@@ -249,9 +267,4 @@ d = LVUBDisplay(s0, s1)
 while True:
 	# display info
 	d.display_song(p)
-
-	# Get status
-	p.send_idle()
-	p.fetch_idle()
-
 	time.sleep(1)
