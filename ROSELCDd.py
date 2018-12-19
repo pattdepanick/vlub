@@ -262,7 +262,7 @@ class LVUBScreen:
 			self.lcd.write(output)
 		
 	def __del__(self):
-		self.lcd.write("Musical streamerShut down %d    "%self.id)
+		self.lcd.write("Musical streamerShutting down %d "%self.id)
 		self.lcd.disconnect()
 		
 class LVUBDisplay:
