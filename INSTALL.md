@@ -11,6 +11,7 @@
 - launch setup.sh using sudo: sudo ./setup.sh
 - Enter volumio password for sudo command
 - In case of only one lCD present in the streamer, please edit the ROSELCD.py file using the vi command in the vlub directory and perform the following changes:
+- edit by launching sudo vi ROSELCD.py
   -in the following part:
     # Our LCD/OLED/... Display
       s0 = LVUBScreen(0, LVUBROWS, LVUBCOLUMNS, "/dev/ttyACM0", LVUBSPEED)
