@@ -7,7 +7,7 @@
 - Connect through ssh to volumio (using putty client for instance)
 - launch from the current shell the git clone command to clone the current repo. It will create a vlub directory in which all necessary files are present
 - the command is the following one: git clone https://github.com/pattdepanick/vlub
-- Enter the vlub directory by issuing the cd command: cd /vlub
+- Enter the vlub directory by issuing the cd command: cd vlub
 - launch setup.sh using sudo: sudo ./setup.sh
 - Enter volumio password for sudo command
 - In case of only one lCD present in the streamer, please edit the ROSELCD.py file using the vi command in the vlub directory and perform the following changes:
