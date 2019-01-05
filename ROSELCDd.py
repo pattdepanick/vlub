@@ -249,6 +249,19 @@ class LVUBScreen:
 		self.__speed = speed
 		self.lcd = LcdBackpack(port, speed)
 		self.lcd.connect()
+		#set display color
+                #red
+                self.lcd.set_backlight_rgb(0xFF, 0, 0)
+                #blue
+                #self.lcd.set_backlight_rgb(0, 0, 0xFF)
+                #green
+                #self.lcd.set_backlight_rgb(0, 0xFF, 0)
+                #white
+                #self.lcd.set_backlight_rgb(0xFF, 0xFF, 0xFF)
+                #set brightness Sets the brightness of the LCD backlight:param brightness: integer value from 0 - 255
+                self.lcd.set_brightness(180)
+                #set contrast Sets the contrast of the LCD character text:param contrast: integer value from 0 - 255
+                self.lcd.set_contrast(180)
 		self.lcd.clear()
 		print("Screen %d created - %dX%d on %s at %d"%(id,columns,lines,port,speed))
 	
