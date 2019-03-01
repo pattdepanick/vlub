@@ -32,6 +32,7 @@ class VLUBSong:
 		self.oldtitle = 'old'
 
 	def display(self,player,lcds):
+		player.get_name()
 		player.get_status()
 		if player.state == 'play':
 			self.oldtitle = self.title
@@ -42,6 +43,7 @@ class VLUBSong:
 			self.album = player.album
 			self.artist = player.artist
 			self.service = player.service
+			self.name = player.name
 			if player.samplerate != '' and player.bitdepth != '':
 				self.bitrate = player.samplerate+"|"+player.bitdepth+'s'
 			else:
@@ -64,20 +66,21 @@ class VLUBSong:
 			self.duration = player.duration
 			self.url = player.uri
 			print("URL:",self.url)
+			print ("PLayer Name:",self.name)
 
 		elif player.state == 'stop':
-			self.title = "Choose now"
-			self.album = "Status stopped"
-			self.artist = "Musical Streamer"
-			self.bitrate = "Some good music"
+			self.title = "Choose Now"
+			self.album = "Status Stopped"
+			self.artist = player.name
+			self.bitrate = "Some Good Music"
 			self.duration = 0
 			self.url = ""
 			self.service = ""
 		elif player.state == 'pause':
 			self.title = "Waiting for"
-			self.album = "Status paused"
-			self.artist = "Musical Streamer"
-			self.bitrate = "Some good music"
+			self.album = "Status Paused"
+			self.artist = player.name
+			self.bitrate = "Some Good Music"
 			self.duration = 0
 			self.url = ""
 			self.service = ""
@@ -85,9 +88,9 @@ class VLUBSong:
 		else:
 			print('Player in mode: %s'%str(player.state))
 			self.title = "Waiting for"
-			self.album = "Status maintenance"
-			self.artist = "Musical Streamer"
-			self.bitrate = "Some good music"
+			self.album = "Status Maintenance"
+			self.artist = player.name
+			self.bitrate = "Some Fix ..."
 			self.duration = 0
 			self.url = ""
 			self.service = ""
@@ -122,19 +125,23 @@ class VLUBPlayer():
 		print("Creating object VLUBPplayer on %s:%s"%(VLUBHOST,VLUBPORT))
 		self.state = "init"
 
+	def get_name(self):
+		self.name = str(platform.node())
+		print("Player Name: %s"%(self.name))
+
 	def get_status(self):
 		# Possible status for volumio
 		stat = [ 'play', 'stop', 'pause']
 		try:
 			req = requests.get("http://"+VLUBHOST+":"+VLUBPORT+"/api/v1/getstate")
-			print ("Return code: ",req.status_code)
+			print("Return code: ",req.status_code)
 		except:
-			print 'We failed to reach a server.'
+			print("We failed to reach the server at http://%s:%s/api/v1/getstate"%(VLUBHOST,VLUBPORT))
 		else:
 			# For successful API call, response code will be 200 (OK)
 			if (req.ok):
-    				# Loading the response data into a dict variable
-    				data = json.loads(req.content)
+				# Loading the response data into a dict variable
+				data = json.loads(req.content)
 				self.state = str(data['status'])
 				print('TYPE: %s',type(data['title']))
 				try:
@@ -233,26 +240,32 @@ class VLUBScreen:
 		self.lcd = LcdBackpack(port, speed)
 		self.lcd.connect()
 		#set display color
-                #red
-                self.lcd.set_backlight_rgb(0xFF, 0, 0)
-                #blue
-                #self.lcd.set_backlight_rgb(0, 0, 0xFF)
-                #green
-                #self.lcd.set_backlight_rgb(0, 0xFF, 0)
-                #white
-                #self.lcd.set_backlight_rgb(0xFF, 0xFF, 0xFF)
-                #set brightness Sets the brightness of the LCD backlight:param brightness: integer value from 0 - 255
-                self.lcd.set_brightness(180)
-                #set contrast Sets the contrast of the LCD character text:param contrast: integer value from 0 - 255
-                self.lcd.set_contrast(180)
+		#red
+		self.lcd.set_backlight_rgb(0xFF, 0, 0)
+		#blue
+		#self.lcd.set_backlight_rgb(0, 0, 0xFF)
+		#green
+		#self.lcd.set_backlight_rgb(0, 0xFF, 0)
+		#white
+		#self.lcd.set_backlight_rgb(0xFF, 0xFF, 0xFF)
+		#set brightness Sets the brightness of the LCD backlight:param brightness: integer value from 0 - 255
+		self.lcd.set_brightness(60)
+		#set contrast Sets the contrast of the LCD character text:param contrast: integer value from 0 - 255
+		self.lcd.set_contrast(180)
+		#clear the lcd
 		self.lcd.clear()
+		#set the blinking cursor to off
+		#self.lcd.block_cursor_off()
+		#set autoscrolling of test to off
+		#self.lcd.autoscroll_off()
 		print("Screen %d created - %dX%d on %s at %d"%(id,columns,lines,port,speed))
 	
 	# Display centered
 	def display_ct(self,line,text):
 		output = text.center(self.columns, ' ')
+		#self.lcd.autoscroll_off()
+		#self.lcd.block_cursor_off()
 		self.lcd.set_cursor_position(1,line)
-		
 		if len(output) > self.columns:
 			self.lcd.write(output[:self.columns-3:]+'...')			
 		else:
@@ -349,16 +362,16 @@ else:
 
 if 'Volumio' in config:
 	volumio = config['Volumio']
-	VLUBHOST = timeout.get('host', DEFVLUBHOST)
-	VLUBPORT = int(timeout.get('port', DEFVLUBPORT))
+	VLUBHOST = str(volumio.get('host', DEFVLUBHOST))
+	VLUBPORT = str(volumio.get('port', DEFVLUBPORT))
 else:
 	VLUBHOST = DEFVLUBHOST
 	VLUBPORT = DEFVLUBPORT
 
 if 'Mpd' in config:
 	mpd = config['Mpd']
-	VLUBMPDHOST = mpd.get('host', DEFVLUBMPDHOST)
-	VLUBMPDPORT = int(mpd.get('port', DEFVLUBMPDPORT))
+	VLUBMPDHOST = str(mpd.get('host', DEFVLUBMPDHOST))
+	VLUBMPDPORT = str(mpd.get('port', DEFVLUBMPDPORT))
 	VLUBMPDPASSWORD = mpd.getboolean('password', DEFVLUBMPDPASSWORD)
 else:
 	VLUBMPDHOST = DEFVLUBMPDHOST
