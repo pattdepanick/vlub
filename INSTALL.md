@@ -7,21 +7,21 @@
 
 # Configuration
 
--In addition to the installer, a configuration file is now available to customize additionnal settings related to LCDs
--the file ROSELCDd.conf allows you to select the color, the brightness qnd the constrast of the LCD
--Defaults are the following:
-	-color = 255, 255, 255 
-	-brightness =  220
-	-contrast =  200
+- In addition to the installer, a configuration file is now available to customize additionnal settings related to LCDs
+- The file ROSELCDd.conf allows you to select the color, the brightness qnd the constrast of the LCD
+- Defaults are the following:
+	- color = 255, 255, 255 
+	- brightness =  220
+	- contrast =  200
 
--Color Values are the following:
-	-red 255,0,0
-	-blue 0,0,255
-	-green 0,255,0
-	-white 255,255,255 (default)
+- Color Values are the following:
+	- red 255,0,0
+	- blue 0,0,255
+	- green 0,255,0
+	- white 255,255,255 (default)
 
--Brightness sets the brightness of the LCD backlight:param brightness: integer value from 0 - 255
--Contrast sets the contrast of the lcd character text:param contrast: integer value from 0 - 255
+- Brightness sets the brightness of the LCD backlight:param brightness: integer value from 0 - 255
+- Contrast sets the contrast of the lcd character text:param contrast: integer value from 0 - 255
 
 # Installation Process
 
@@ -35,10 +35,6 @@
 - reboot
 - Done !
 
-# Configuration
-
--In addition to the installer, a configuration file is now available to customize additionnal settings related to LCDs
--
 if using python3 (to be done later):
 - pip install pip3
 - pip3 install python-mpd2
