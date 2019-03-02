@@ -103,7 +103,7 @@ class VLUBSong:
 		self.et += VLUBLOOP
 
 		if lcds.nb == 1:
-			# If we have 1 screen, we limit the display to title and artist (later rotate with album and bit rate)
+			# If we have 1 screen, we limit the display to title and artist  then rotate with album and bit rate
 			if self.flag:
 				lcds.screens[0].display_ct(1,s.artist)
 				lcds.screens[0].display_ct(2,s.album)
@@ -190,7 +190,7 @@ class VLUBPlayer():
 		
 class VLUBMPDPlayer(MPDClient):
 	def __init__(self):
-		print("Creating object VLUBPplayer on %s:%s"%(VLUBMPDHOST,VLUBMPDPORT))
+		print("Creating object VLUBplayer on %s:%s"%(VLUBMPDHOST,VLUBMPDPORT))
 		client = MPDClient()               # create client object
 		client.timeout = None              # network timeout in seconds (floats allowed), default: None
 		client.use_unicode = True          # Can be switched back later
@@ -230,7 +230,7 @@ class VLUBMPDPlayer(MPDClient):
 		self.get_status()
 
 class VLUBScreen:
-	def __init__(self,id,lines,columns,port,speed):
+	def __init__(self,id,lines,columns,port,speed,color,brightness,contrast):
 		print("Creating object VLUBScreen %s",id)
 		self.id = id
 		self.lines = lines
@@ -238,29 +238,38 @@ class VLUBScreen:
 		self.__port = port
 		self.__speed = speed
 		self.lcd = LcdBackpack(port, speed)
+		self.color = color
+		self.brightness = brightness
+		self.contrast = contrast
 		self.lcd.connect()
 		#set display color
 		#red
-		self.lcd.set_backlight_rgb(0xFF, 0, 0)
+		#self.lcd.set_backlight_rgb(255, 0, 0)
 		#blue
-		#self.lcd.set_backlight_rgb(0, 0, 0xFF)
+		#self.lcd.set_backlight_rgb(0, 0, 255)
 		#green
 		#self.lcd.set_backlight_rgb(0, 0xFF, 0)
 		#white
 		#self.lcd.set_backlight_rgb(0xFF, 0xFF, 0xFF)
+		#Default White
+		print("screen color is" , color)
+		print("screen brightness is" , brightness)
+		print("screen contrast is" , contrast)
 		#set brightness Sets the brightness of the LCD backlight:param brightness: integer value from 0 - 255
-		self.lcd.set_brightness(60)
-		#set contrast Sets the contrast of the LCD character text:param contrast: integer value from 0 - 255
-		self.lcd.set_contrast(180)
+		self.lcd.set_brightness(brightness)
+		#set contrast sets the contrast of the lcd character text:param contrast: integer value from 0 - 255
+		self.lcd.set_contrast(contrast)
+		#$color = substr($color,1,-1);
+		self.lcd.set_backlight_rgb(color[0], color[1], color[2])
 		#clear the lcd
 		self.lcd.clear()
 		#set the blinking cursor to off
 		#self.lcd.block_cursor_off()
 		#set autoscrolling of test to off
 		#self.lcd.autoscroll_off()
-		print("Screen %d created - %dX%d on %s at %d"%(id,columns,lines,port,speed))
+		print("screen %d created - %dx%d on %s at %d"%(id,columns,lines,port,speed))
 	
-	# Display centered
+	# display centered
 	def display_ct(self,line,text):
 		output = text.center(self.columns, ' ')
 		#self.lcd.autoscroll_off()
@@ -306,6 +315,9 @@ init = True
 
 # Hardcoded default values
 DEFVLUBSCREENS = 2
+DEFVLUBCOLOR = 255,255,255
+DEFVLUBBRIGHTNESS = 200
+DEFVLUBCONTRAST = 220
 DEFVLUBROWS = 2
 DEFVLUBCOLUMNS = 16
 DEFVLUBSPEED = 115200
@@ -339,12 +351,18 @@ if 'Screen' in config:
 	# defaults forced
 	# We have 2 LCD displays of 2 lines of 16 columns
 	VLUBSCREENS = int(screen.get('nb', DEFVLUBSCREENS))
+	VLUBCOLOR = [int(x) for x in screen.get('color', DEFVLUBCOLOR).split(',')]
+	VLUBBRIGHTNESS = int(screen.get('brightness', DEFVLUBBRIGHTNESS))
+	VLUBCONTRAST = int(screen.get('contrast', DEFVLUBCONTRAST))
 	VLUBROWS = int(screen.get('rows', DEFVLUBROWS))
 	VLUBCOLUMNS = int(screen.get('columns', DEFVLUBCOLUMNS))
 	VLUBSPEED = int(screen.get('speed', DEFVLUBSPEED))
 	VLUBDEVICE = screen.get('device', DEFVLUBDEVICE)
 else:
 	VLUBSCREENS = DEFVLUBSCREENS
+	VLUBCOLOR = DEFVLUBCOLOR
+	VLUBBRIGHTNESS = DEFVLUBBRIGHTNESS
+	VLUBCONTRAST = DEFVLUBCONTRAST
 	VLUBROWS = DEFVLUBROWS
 	VLUBCOLUMNS = DEFVLUBCOLUMNS
 	VLUBSPEED = DEFVLUBSPEED
@@ -381,7 +399,7 @@ else:
 # Our LCD/OLED/... Display
 s = []
 for i in range(0,VLUBSCREENS):
-	s.append(VLUBScreen(i, VLUBROWS, VLUBCOLUMNS, VLUBDEVICE+str(i), VLUBSPEED))
+	s.append(VLUBScreen(i, VLUBROWS, VLUBCOLUMNS, VLUBDEVICE+str(i), VLUBSPEED, VLUBCOLOR, VLUBBRIGHTNESS, VLUBCONTRAST))
 # use the screens found
 d = VLUBDisplay(*s)
 time.sleep(VLUBINITTIMEOUT)
