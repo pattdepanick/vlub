@@ -1,2 +1,2 @@
 # vlub
-volumio + lcd + usb serial backpack
+volumio + LCD / OLED + usb serial backpack
