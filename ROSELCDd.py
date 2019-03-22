@@ -23,15 +23,17 @@ from mpd import MPDClient
 class VLUBSong:
 	def __init__(self,player):
 
-		print("Creating object VLUBSong with player state",player.state)
+		if player != None:
+			print("Creating object VLUBSong with player state %s"%player.state)
+		else:
+			print("Creating Fake object VLUBSong")
 		# elapsed time
 		self.et = 0
 		# Mode in which we display metatdata if one screen
-		self.flag = True
 		self.title = ''
 		self.oldtitle = 'old'
 
-	def display(self,player,scrs):
+	def display(self,player,d):
 		player.get_name()
 		player.get_status()
 		if player.state == 'play':
@@ -98,40 +100,10 @@ class VLUBSong:
 
 		# Handle monoscreen case
 		if self.et%VLUBFLIP == 0:
-			self.flag = not self.flag
+			d.flag = not d.flag
+		d.display(self)
 		# As we loop every VLUBLOOP seconds
 		self.et += VLUBLOOP
-
-		if scrs.nb == 1:
-			# If we have 1 screen, we limit the display to title and artist  then rotate with album and bit rate
-			if self.flag:
-				if scrs.screens[0].type == "LCD":
-					scrs.screens[0].display_ct(1,s.artist)
-					scrs.screens[0].display_ct(2,s.album)
-				elif scrs.screens[0].type == "OLED":
-					scrs.screens[0].display_ct(2,s.artist)
-					scrs.screens[0].display_ct(1,s.album)
-			else:
-				if scrs.screens[0].type == "LCD":
-					scrs.screens[0].display_ct(1,s.title)
-					scrs.screens[0].display_ct(2,s.bitrate)
-				elif scrs.screens[0].type == "OLED":
-					scrs.screens[0].display_ct(2,s.title)
-					scrs.screens[0].display_ct(1,s.bitrate)
-
-		if scrs.nb == 2:
-			# If we have 2 screens, we limit the display to title and artist + album and bit rate
-			# TODO: externalyze in a table the allocation of fields into spaces
-			if scrs.screens[0].type == "LCD":
-				scrs.screens[0].display_ct(1,s.artist)
-				scrs.screens[0].display_ct(2,s.album)
-				scrs.screens[1].display_ct(2,s.title)
-				scrs.screens[1].display_ct(1,s.bitrate)
-			elif scrs.screens[0].type == "OLED":
-				scrs.screens[0].display_ct(2,s.artist)
-				scrs.screens[0].display_ct(1,s.album)
-				scrs.screens[1].display_ct(1,s.title)
-				scrs.screens[1].display_ct(2,s.bitrate)
 
 class VLUBPlayer():
 
@@ -260,21 +232,33 @@ class VLUBScreen:
 		self.scr.display_on()
 		#clear the screen
 		self.scr.clear()
-		#set the blinking cursor to off
-		self.scr.set_block_cursor(False)
+		#set the blinking cursor to off - True for this !
+		self.scr.set_block_cursor(True)
 		#set autoscrolling to off
 		self.scr.set_autoscroll(False)
-		#self.scr.autoscroll_off()
 		if type == "LCD":
 			self.scr.set_brightness(brightness)
 			self.scr.set_contrast(contrast)
 			self.scr.set_backlight_rgb(color[0], color[1], color[2])
 		print("screen %d created - %dx%d on %s at %d"%(id,columns,lines,port,speed))
 	
-	# display centered
-	def display_ct(self,line,text):
+	# display all messages centered on a given screen line by line
+	def display_ct(self,*msg):
+		if self.type == "OLED":
+			for l in range(0,self.lines):
+				print("Printing %s on line %d of screen %d"%(msg[l],l+1,self.id))
+				self.display_line_ct(l+1,msg[l])
+		elif self.type == "LCD":
+			for l in range(self.lines,0,-1):
+				print("Printing %s on line %d of screen %d"%(msg[self.lines-l],l,self.id))
+				self.display_line_ct(l,msg[self.lines-l])
+
+	# display centered on a single line of a given screen
+	def display_line_ct(self,line,text):
 		output = text.center(self.columns, ' ')
 		self.scr.set_cursor_position(1,line)
+		#set autoscrolling to correct value based on config file
+		#self.scr.set_autoscroll(False)
 		if len(output) > self.columns:
 			self.scr.write(output[:self.columns-3:]+'...')
 		else:
@@ -286,20 +270,39 @@ class VLUBScreen:
 		self.scr.disconnect()
 		
 class VLUBDisplay:
+	def __display_ct__(self,*msg):
+		pass
+
+	def display(self,s):
+		# Display msg based on number of screens
+		if self.nb == 1:
+			# If we have 1 screen, we limit the display to title and artist then rotate with album and bit rate
+			if self.flag:
+				self.screens[0].display_ct(s.artist,s.album)
+			else:
+				self.screens[0].display_ct(s.title,s.bitrate)
+		if self.nb == 2:
+			# If we have 2 screens, we limit the display to title and artist + album and bit rate
+			# TODO: externalyze in a table the allocation of fields into spaces
+			self.screens[0].display_ct(s.artist,s.album)
+			self.screens[1].display_ct(s.title,s.bitrate)
+
 	def __init__(self,*screens):
 		# nb equal the number of screens so starts at 1
 		self.nb = len(screens)
 		self.screens = screens
 		self.name = str(platform.node())
+		self.flag = True
 
 		print("Creating object VLUBDisplay (%s) with %d screens"%(self.name,self.nb))
+		s = VLUBSong(None)
 		for i in range(0,self.nb):
 			if i == 0:
 				name = self.name
 			else:
 				name = "Musical streamer"
-			self.screens[i].display_ct(1,name)
-			self.screens[i].display_ct(2,"Starting on %d"%i)
+			
+			self.screens[i].display_ct(name,"Starting on %d"%i)
 
 	def __del__(self):
 		for i in range(0,self.nb):
@@ -307,10 +310,12 @@ class VLUBDisplay:
 				name = self.name
 			else:
 				name = "Musical streamer"
-			print("Display name (%d) is : %s",(i,name))
-			self.screens[i].display_ct(1,name)
-			self.screens[i].display_ct(2,"Shutting down %d"%i)
+			print("Display name (%d) is : %s"%(i,name))
+			self.__display_ct__(name,"Shutting down %d"%i)
 
+		time.sleep(VLUBINITTIMEOUT)
+		for i in range(0,self.nb):
+			self.screens[i].__del__()
 			
 # To display a specific string at startup
 init = True
@@ -430,3 +435,5 @@ while True:
 	# display info
 	s.display(p,d)
 	time.sleep(VLUBLOOP)
+
+d.__del__()
