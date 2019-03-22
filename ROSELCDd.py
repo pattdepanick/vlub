@@ -70,7 +70,7 @@ class VLUBSong:
 
 		elif player.state == 'stop':
 			self.title = "Choose Now"
-			self.album = "Status Stopped"
+			self.album = VLUBMSGSTATUSSTOPPED
 			self.artist = player.name
 			self.bitrate = "Some Good Music"
 			self.duration = 0
@@ -78,7 +78,7 @@ class VLUBSong:
 			self.service = ""
 		elif player.state == 'pause':
 			self.title = "Waiting for"
-			self.album = "Status Paused"
+			self.album = VLUBMSGSTATUSPAUSED
 			self.artist = player.name
 			self.bitrate = "Some Good Music"
 			self.duration = 0
@@ -262,7 +262,7 @@ class VLUBScreen:
 		self.scr.clear()
 		#set the blinking cursor to off
 		self.scr.set_block_cursor(False)
-		#set autoscrolling of test to off
+		#set autoscrolling to off
 		self.scr.set_autoscroll(False)
 		#self.scr.autoscroll_off()
 		if type == "LCD":
@@ -340,7 +340,8 @@ DEFVLUBMPDHOST = 'localhost'
 DEFVLUBMPDPORT = '6600'
 DEFVLUBMPDPASSWORD = False
 ##
-
+DEFVLUBMSGSTATUSSTOPPED = "Status Stopped"
+DEFVLUBMSGSTATUSPAUSED = "Status Paused"
 
 # Manage a configuration file
 config = configparser.ConfigParser()
@@ -400,6 +401,13 @@ else:
 	VLUBMPDHOST = DEFVLUBMPDHOST
 	VLUBMPDPORT = DEFVLUBMPDPORT
 	VLUBMPDPASSWORD = DEFVLUBMPDPASSWORD
+
+if 'Msg' in config:
+	msg = config['Msg']
+	VLUBMSGSTATUSSTOPPED = str(msg.get('statusstopped', DEFVLUBMSGSTATUSSTOPPED))
+	VLUBMSGSTATUSPAUSED = str(msg.get('statuspaused', DEFVLUBMSGSTATUSPAUSED))
+else:
+	VLUBMSGSTATUSPAUSED = DEFVLUBMSGSTATUSPAUSED
 
 # Our LCD/OLED/... Display
 s = []
