@@ -29,5 +29,5 @@ if [ _"$nb" != _"" ] && [ $nb -gt 0 ]; then
 fi
 install -m 0644 $VLUBDIR/ROSELCDd.conf /etc
 systemctl enable volumio-lcd
-systemctl start volumio-lcd
+systemctl restart volumio-lcd
 #reboot
