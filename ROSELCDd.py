@@ -20,6 +20,23 @@ from lcdbackpack import LcdBackpack
 from mpd import MPDClient
 
 
+def handler(signum, frame):
+	print("Clearing display 1")
+	for i in range(0,d.nb):
+		if i == 0:
+			name = d.name
+		else:
+			name = "Musical streamer"
+		
+		print("Printing on screen %d"%i)
+		d.screens[i].display_ct(name,"Shutting down %d"%i)
+
+	print("Clearing display 2")
+	time.sleep(VLUBINITTIMEOUT)
+	sys.exit(0)
+
+signal.signal(signal.SIGINT, handler)
+
 class VLUBSong:
 	def __init__(self,player):
 
@@ -265,6 +282,7 @@ class VLUBScreen:
 			self.scr.write(output)
 		
 	def __del__(self):
+		print("Clearing scren %d"%self.id)
 		self.scr.clear()
 		self.scr.display_off()
 		self.scr.disconnect()
@@ -295,7 +313,6 @@ class VLUBDisplay:
 		self.flag = True
 
 		print("Creating object VLUBDisplay (%s) with %d screens"%(self.name,self.nb))
-		s = VLUBSong(None)
 		for i in range(0,self.nb):
 			if i == 0:
 				name = self.name
@@ -305,17 +322,7 @@ class VLUBDisplay:
 			self.screens[i].display_ct(name,"Starting on %d"%i)
 
 	def __del__(self):
-		for i in range(0,self.nb):
-			if i == 0:
-				name = self.name
-			else:
-				name = "Musical streamer"
-			print("Display name (%d) is : %s"%(i,name))
-			self.__display_ct__(name,"Shutting down %d"%i)
-
-		time.sleep(VLUBINITTIMEOUT)
-		for i in range(0,self.nb):
-			self.screens[i].__del__()
+		print("Clearing display")
 			
 # To display a specific string at startup
 init = True
@@ -436,4 +443,3 @@ while True:
 	s.display(p,d)
 	time.sleep(VLUBLOOP)
 
-d.__del__()
