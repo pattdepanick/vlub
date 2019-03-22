@@ -31,7 +31,7 @@ class VLUBSong:
 		self.title = ''
 		self.oldtitle = 'old'
 
-	def display(self,player,lcds):
+	def display(self,player,scrs):
 		player.get_name()
 		player.get_status()
 		if player.state == 'play':
@@ -102,22 +102,36 @@ class VLUBSong:
 		# As we loop every VLUBLOOP seconds
 		self.et += VLUBLOOP
 
-		if lcds.nb == 1:
+		if scrs.nb == 1:
 			# If we have 1 screen, we limit the display to title and artist  then rotate with album and bit rate
 			if self.flag:
-				lcds.screens[0].display_ct(1,s.artist)
-				lcds.screens[0].display_ct(2,s.album)
+				if scrs.screens[0].type == "LCD":
+					scrs.screens[0].display_ct(1,s.artist)
+					scrs.screens[0].display_ct(2,s.album)
+				elif scrs.screens[0].type == "OLED":
+					scrs.screens[0].display_ct(2,s.artist)
+					scrs.screens[0].display_ct(1,s.album)
 			else:
-				lcds.screens[0].display_ct(1,s.title)
-				lcds.screens[0].display_ct(2,s.bitrate)
+				if scrs.screens[0].type == "LCD":
+					scrs.screens[0].display_ct(1,s.title)
+					scrs.screens[0].display_ct(2,s.bitrate)
+				elif scrs.screens[0].type == "OLED":
+					scrs.screens[0].display_ct(2,s.title)
+					scrs.screens[0].display_ct(1,s.bitrate)
 
-		if lcds.nb == 2:
+		if scrs.nb == 2:
 			# If we have 2 screens, we limit the display to title and artist + album and bit rate
 			# TODO: externalyze in a table the allocation of fields into spaces
-			lcds.screens[0].display_ct(1,s.artist)
-			lcds.screens[0].display_ct(2,s.album)
-			lcds.screens[1].display_ct(1,s.title)
-			lcds.screens[1].display_ct(2,s.bitrate)
+			if scrs.screens[0].type == "LCD":
+				scrs.screens[0].display_ct(1,s.artist)
+				scrs.screens[0].display_ct(2,s.album)
+				scrs.screens[1].display_ct(2,s.title)
+				scrs.screens[1].display_ct(1,s.bitrate)
+			elif scrs.screens[0].type == "OLED":
+				scrs.screens[0].display_ct(2,s.artist)
+				scrs.screens[0].display_ct(1,s.album)
+				scrs.screens[1].display_ct(1,s.title)
+				scrs.screens[1].display_ct(2,s.bitrate)
 
 class VLUBPlayer():
 
@@ -230,58 +244,46 @@ class VLUBMPDPlayer(MPDClient):
 		self.get_status()
 
 class VLUBScreen:
-	def __init__(self,id,lines,columns,port,speed,color,brightness,contrast):
+	def __init__(self,id,type,lines,columns,port,speed,color,brightness,contrast):
 		print("Creating object VLUBScreen %s",id)
 		self.id = id
 		self.lines = lines
 		self.columns = columns
 		self.__port = port
 		self.__speed = speed
-		self.lcd = LcdBackpack(port, speed)
+		self.type = type
+		self.scr = LcdBackpack(port, speed)
 		self.color = color
 		self.brightness = brightness
 		self.contrast = contrast
-		self.lcd.connect()
-		#set display color
-		#red
-		#self.lcd.set_backlight_rgb(255, 0, 0)
-		#blue
-		#self.lcd.set_backlight_rgb(0, 0, 255)
-		#green
-		#self.lcd.set_backlight_rgb(0, 0xFF, 0)
-		#white
-		#self.lcd.set_backlight_rgb(0xFF, 0xFF, 0xFF)
-		#Default White
-		print("screen color is" , color)
-		print("screen brightness is" , brightness)
-		print("screen contrast is" , contrast)
-		#set brightness Sets the brightness of the LCD backlight:param brightness: integer value from 0 - 255
-		self.lcd.set_brightness(brightness)
-		#set contrast sets the contrast of the lcd character text:param contrast: integer value from 0 - 255
-		self.lcd.set_contrast(contrast)
-		#$color = substr($color,1,-1);
-		self.lcd.set_backlight_rgb(color[0], color[1], color[2])
-		#clear the lcd
-		self.lcd.clear()
+		self.scr.connect()
+		self.scr.display_on()
+		#clear the screen
+		self.scr.clear()
 		#set the blinking cursor to off
-		#self.lcd.block_cursor_off()
+		self.scr.set_block_cursor(False)
 		#set autoscrolling of test to off
-		#self.lcd.autoscroll_off()
+		self.scr.set_autoscroll(False)
+		#self.scr.autoscroll_off()
+		if type == "LCD":
+			self.scr.set_brightness(brightness)
+			self.scr.set_contrast(contrast)
+			self.scr.set_backlight_rgb(color[0], color[1], color[2])
 		print("screen %d created - %dx%d on %s at %d"%(id,columns,lines,port,speed))
 	
 	# display centered
 	def display_ct(self,line,text):
 		output = text.center(self.columns, ' ')
-		#self.lcd.autoscroll_off()
-		#self.lcd.block_cursor_off()
-		self.lcd.set_cursor_position(1,line)
+		self.scr.set_cursor_position(1,line)
 		if len(output) > self.columns:
-			self.lcd.write(output[:self.columns-3:]+'...')			
+			self.scr.write(output[:self.columns-3:]+'...')
 		else:
-			self.lcd.write(output)
+			self.scr.write(output)
 		
 	def __del__(self):
-		self.lcd.disconnect()
+		self.scr.clear()
+		self.scr.display_off()
+		self.scr.disconnect()
 		
 class VLUBDisplay:
 	def __init__(self,*screens):
@@ -322,6 +324,7 @@ DEFVLUBROWS = 2
 DEFVLUBCOLUMNS = 16
 DEFVLUBSPEED = 115200
 DEFVLUBDEVICE = "/dev/ttyACM"
+DEFVLUBTYPE = "OLED"
 # Loop every second by default
 DEFVLUBLOOP = 1
 # If one screen flip between metadata every 5 seconds by default
@@ -358,6 +361,7 @@ if 'Screen' in config:
 	VLUBCOLUMNS = int(screen.get('columns', DEFVLUBCOLUMNS))
 	VLUBSPEED = int(screen.get('speed', DEFVLUBSPEED))
 	VLUBDEVICE = screen.get('device', DEFVLUBDEVICE)
+	VLUBTYPE = screen.get('type', DEFVLUBTYPE)
 else:
 	VLUBSCREENS = DEFVLUBSCREENS
 	VLUBCOLOR = DEFVLUBCOLOR
@@ -367,6 +371,7 @@ else:
 	VLUBCOLUMNS = DEFVLUBCOLUMNS
 	VLUBSPEED = DEFVLUBSPEED
 	VLUBDEVICE = DEFVLUBDEVICE
+	VLUBTYPE = DEFVLUBTYPE
 
 if 'Timeout' in config:
 	timeout = config['Timeout']
@@ -399,13 +404,13 @@ else:
 # Our LCD/OLED/... Display
 s = []
 for i in range(0,VLUBSCREENS):
-	s.append(VLUBScreen(i, VLUBROWS, VLUBCOLUMNS, VLUBDEVICE+str(i), VLUBSPEED, VLUBCOLOR, VLUBBRIGHTNESS, VLUBCONTRAST))
+	s.append(VLUBScreen(i, VLUBTYPE, VLUBROWS, VLUBCOLUMNS, VLUBDEVICE+str(i), VLUBSPEED, VLUBCOLOR, VLUBBRIGHTNESS, VLUBCONTRAST))
 # use the screens found
 d = VLUBDisplay(*s)
 time.sleep(VLUBINITTIMEOUT)
 
-#s0.display_ct(1,"Salut Fredo xxxxxxxxx")
-#s1.display_ct(2,"Salut Bruno yyyyyyyyy")
+#s0.display_ct(1,"  player.name ")
+#s1.display_ct(2,"  Initializing ")
 
 # Talking to our MDP daemon
 p = VLUBPlayer()
