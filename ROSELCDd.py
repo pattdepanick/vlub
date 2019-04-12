@@ -240,6 +240,7 @@ class VLUBScreen:
 		self.columns = columns
 		self.__port = port
 		self.__speed = speed
+		self.__offset = 0
 		self.type = type
 		self.scr = LcdBackpack(port, speed)
 		self.color = color
@@ -277,7 +278,17 @@ class VLUBScreen:
 		#set autoscrolling to correct value based on config file
 		#self.scr.set_autoscroll(False)
 		if len(output) > self.columns:
-			self.scr.write(output[:self.columns-3:]+'...')
+			if VLUBMODE == "fixed":
+				self.scr.write(output[:self.columns-3:]+'...')
+			elif VLUBMODE == "scrolling":
+				self.__offset = self.__offset + 1
+				# Adds space to end properly the string (erase the last char moving forward)
+				# Number of space is based on text end and columns (length of screen)
+				self.scr.write(output[self.__offset:self.__offset+self.columns]+" ")
+				if self.__offset == len(output):
+					self.__offset = -1
+			else:
+				print("Error in conf file: mode %s unknown"%(VLUBMODE))
 		else:
 			self.scr.write(output)
 		
@@ -343,6 +354,7 @@ DEFVLUBLOOP = 1
 DEFVLUBFLIP = 5
 #
 DEFVLUBINITTIMEOUT = 5
+DEFVLUBMODE = "fixed"
 
 #Volmuio CLient Connection Settings
 DEFVLUBHOST = 'localhost'
@@ -375,6 +387,7 @@ if 'Screen' in config:
 	VLUBSPEED = int(screen.get('speed', DEFVLUBSPEED))
 	VLUBDEVICE = screen.get('device', DEFVLUBDEVICE)
 	VLUBTYPE = screen.get('type', DEFVLUBTYPE)
+	VLUBMODE = screen.get('mode', DEFVLUBMODE)
 else:
 	VLUBSCREENS = DEFVLUBSCREENS
 	VLUBCOLOR = DEFVLUBCOLOR
@@ -385,6 +398,7 @@ else:
 	VLUBSPEED = DEFVLUBSPEED
 	VLUBDEVICE = DEFVLUBDEVICE
 	VLUBTYPE = DEFVLUBTYPE
+	VLUBMODE = DEFVLUBMODE
 
 if 'Timeout' in config:
 	timeout = config['Timeout']
