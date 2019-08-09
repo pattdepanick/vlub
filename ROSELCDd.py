@@ -37,6 +37,16 @@ def handler(signum, frame):
 
 signal.signal(signal.SIGINT, handler)
 
+def sec2ms(sec):
+    """Transforms seconds sec into a printable chain "mm:ss" """
+    """Inspired from http://python.jpvweb.com/python/mesrecettespython/doku.php?id=compte_a_rebours """
+    m=0
+    s=int(sec)
+    if s >= 60:
+        m = s//60
+        s -= m*60
+    return "%02d:%02d" % (m, s)
+
 class VLUBSong:
 	def __init__(self,player):
 
@@ -56,9 +66,15 @@ class VLUBSong:
 		if player.state == 'play':
 			self.oldtitle = self.title
 			self.title = player.title
-			# Reset elapsed time as we changed song
+			# Reset elapsed and remain times as we changed song
 			if self.oldtitle != self.title:
 				self.et = 0
+				self.remain = int(player.duration)
+			else:
+				# As we loop on VLUBLOOP seconds, decrement by that amount the remianing time each call
+				self.remain = self.remain-VLUBLOOP
+				if self.remain <= 0:
+					self.remain = 0
 			self.album = player.album
 			self.artist = player.artist
 			self.service = player.service
@@ -92,6 +108,7 @@ class VLUBSong:
 			self.album = VLUBMSGSTATUSSTOPPED
 			self.artist = player.name
 			self.bitrate = "Some Good Music"
+			self.remain = 0
 			self.duration = 0
 			self.url = ""
 			self.service = ""
@@ -100,6 +117,7 @@ class VLUBSong:
 			self.album = VLUBMSGSTATUSPAUSED
 			self.artist = player.name
 			self.bitrate = "Some Good Music"
+			self.remain = 0
 			self.duration = 0
 			self.url = ""
 			self.service = ""
@@ -110,10 +128,11 @@ class VLUBSong:
 			self.album = "Status Maintenance"
 			self.artist = player.name
 			self.bitrate = "Some Fix ..."
+			self.remain = 0
 			self.duration = 0
 			self.url = ""
 			self.service = ""
-		print('Song created',self.artist, self.album, self.title, self.bitrate, self.url)
+		print('Song created',self.artist, self.album, self.title, self.bitrate, self.remain, self.url)
 
 		# Handle monoscreen case
 		if self.et%VLUBFLIP == 0:
@@ -314,7 +333,11 @@ class VLUBDisplay:
 			# If we have 2 screens, we limit the display to title and artist + album and bit rate
 			# TODO: externalyze in a table the allocation of fields into spaces
 			self.screens[0].display_ct(s.artist,s.album)
-			self.screens[1].display_ct(s.title,s.bitrate)
+			# If we have 2 screens, we rotate betwwen remainig time and bit rate if duration exists
+			if self.flag and s.duration != 0:
+				self.screens[1].display_ct(s.title,s.bitrate)
+			else:
+				self.screens[1].display_ct(s.title,"Remain: "+sec2ms(s.remain))
 
 	def __init__(self,*screens):
 		# nb equal the number of screens so starts at 1
