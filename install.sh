@@ -6,7 +6,7 @@ set -x
 VLUBDIR=/home/volumio/vlub
 
 # Setup system
-apt-get install -y vim python-pip python-configparser dos2unix file
+apt-get install -y vim python-pip python-configparser dos2unix file unzip imagemagick
 pip install python-mpd2
 pip install pyserial
 pip install --pre lcdbackpack
@@ -31,3 +31,8 @@ install -m 0644 $VLUBDIR/ROSELCDd.conf /etc
 systemctl enable volumio-lcd
 systemctl restart volumio-lcd
 #reboot
+# Get plugin code
+# git clone volumio-plugin
+# cd plugin
+# Install that plugin locally
+# volumio plugin refresh
