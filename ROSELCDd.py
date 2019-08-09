@@ -281,14 +281,14 @@ class VLUBScreen:
 	
 	# display all messages centered on a given screen line by line
 	def display_ct(self,*msg):
-		if self.type == "OLED":
-			for l in range(0,self.lines):
-				print("Printing %s on line %d of screen %d"%(msg[l],l+1,self.id))
-				self.display_line_ct(l+1,msg[l])
-		elif self.type == "LCD":
-			for l in range(self.lines,0,-1):
-				print("Printing %s on line %d of screen %d"%(msg[self.lines-l],l,self.id))
-				self.display_line_ct(l,msg[self.lines-l])
+		#if self.type == "OLED":
+			#for l in range(0,self.lines):
+				#print("Printing %s on line %d of screen %d"%(msg[l],l+1,self.id))
+				#self.display_line_ct(l+1,msg[l])
+		#elif self.type == "LCD":
+		for l in range(self.lines,0,-1):
+			print("Printing %s on line %d of screen %d"%(msg[self.lines-l],l,self.id))
+			self.display_line_ct(l,msg[self.lines-l])
 
 	# display centered on a single line of a given screen
 	def display_line_ct(self,line,text):
@@ -337,7 +337,7 @@ class VLUBDisplay:
 			if self.flag and s.duration != 0:
 				self.screens[1].display_ct(s.title,s.bitrate)
 			else:
-				self.screens[1].display_ct(s.title,"Remain: "+sec2ms(s.remain))
+				self.screens[1].display_ct(s.title,"-- "+sec2ms(s.remain)+" --")
 
 	def __init__(self,*screens):
 		# nb equal the number of screens so starts at 1
