@@ -67,14 +67,15 @@ class VLUBSong:
 			self.oldtitle = self.title
 			self.title = player.title
 			# Reset elapsed and remain times as we changed song
-			if self.oldtitle != self.title:
-				self.et = 0
-				self.remain = int(player.duration)
-			else:
+			#if self.oldtitle != self.title:
+			#	self.et = 0
+			#	self.seek = int(player.seek)
+			# else:
 				# As we loop on VLUBLOOP seconds, decrement by that amount the remianing time each call
-				self.remain = self.remain-VLUBLOOP
-				if self.remain <= 0:
-					self.remain = 0
+				#self.remain = self.remain-VLUBLOOP
+				#if self.remain <= 0:
+					#self.remain = 0
+			self.seek = player.seek
 			self.album = player.album
 			self.artist = player.artist
 			self.service = player.service
@@ -108,7 +109,7 @@ class VLUBSong:
 			self.album = VLUBMSGSTATUSSTOPPED
 			self.artist = player.name
 			self.bitrate = "Some Good Music"
-			self.remain = 0
+			self.seek = 0
 			self.duration = 0
 			self.url = ""
 			self.service = ""
@@ -117,7 +118,7 @@ class VLUBSong:
 			self.album = VLUBMSGSTATUSPAUSED
 			self.artist = player.name
 			self.bitrate = "Some Good Music"
-			self.remain = 0
+			self.seek = player.seek
 			self.duration = 0
 			self.url = ""
 			self.service = ""
@@ -128,11 +129,11 @@ class VLUBSong:
 			self.album = "Status Maintenance"
 			self.artist = player.name
 			self.bitrate = "Some Fix ..."
-			self.remain = 0
+			self.seek = 0
 			self.duration = 0
 			self.url = ""
 			self.service = ""
-		print('Song created',self.artist, self.album, self.title, self.bitrate, self.remain, self.url)
+		print('Song created',self.artist, self.album, self.title, self.bitrate, self.seek, self.url)
 
 		# Handle monoscreen case
 		if self.et%VLUBFLIP == 0:
@@ -193,6 +194,10 @@ class VLUBPlayer():
 					self.duration = str(data['duration'])
 				except:
 					self.duration = 0
+				try:
+					self.seek = str(data['seek'])
+				except:
+					self.seek = 0
 				try:
 					self.samplerate = str(data['samplerate'])
 				except:
@@ -333,11 +338,11 @@ class VLUBDisplay:
 			# If we have 2 screens, we limit the display to title and artist + album and bit rate
 			# TODO: externalyze in a table the allocation of fields into spaces
 			self.screens[0].display_ct(s.artist,s.album)
-			# If we have 2 screens, we rotate betwwen remainig time and bit rate if duration exists
-			if self.flag and s.duration != 0:
+			# If we have 2 screens, we rotate betwwen elapsed time and bit rate if seek exists
+			if self.flag and s.seek != 0:
 				self.screens[1].display_ct(s.title,s.bitrate)
 			else:
-				self.screens[1].display_ct(s.title,"-- "+sec2ms(s.remain)+" --")
+				self.screens[1].display_ct(s.title,"-- "+sec2ms(s.seek)+" --")
 
 	def __init__(self,*screens):
 		# nb equal the number of screens so starts at 1
