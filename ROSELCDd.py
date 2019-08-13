@@ -66,16 +66,7 @@ class VLUBSong:
 		if player.state == 'play':
 			self.oldtitle = self.title
 			self.title = player.title
-			# Reset elapsed and remain times as we changed song
-			#if self.oldtitle != self.title:
-			#	self.et = 0
-			#	self.seek = int(player.seek)
-			# else:
-				# As we loop on VLUBLOOP seconds, decrement by that amount the remianing time each call
-				#self.remain = self.remain-VLUBLOOP
-				#if self.remain <= 0:
-					#self.remain = 0
-			self.seek = player.seek
+			self.seek = player.seek[:3]
 			self.album = player.album
 			self.artist = player.artist
 			self.service = player.service
@@ -118,7 +109,7 @@ class VLUBSong:
 			self.album = VLUBMSGSTATUSPAUSED
 			self.artist = player.name
 			self.bitrate = "Some Good Music"
-			self.seek = player.seek
+			self.seek = player.seek[:3]
 			self.duration = 0
 			self.url = ""
 			self.service = ""
