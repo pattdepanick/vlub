@@ -47,6 +47,14 @@ def sec2ms(sec):
         s -= m*60
     return "%02d:%02d" % (m, s)
 
+def ms2mns(millis):
+        """Transforms milliseconds sec into a printable chain "mm:ss" """
+        """Inspired from https://stackoverflow.com/questions/35989666/convert-milliseconds-to-hours-min-and-seconds-python"""
+        s =(millis/1000)%60
+        m =(millis/(1000*60))%60
+        h =(millis/(1000*60*60))%24
+        return "%02d:%02d" % (m, s)
+
 class VLUBSong:
 	def __init__(self,player):
 
@@ -66,7 +74,7 @@ class VLUBSong:
 		if player.state == 'play':
 			self.oldtitle = self.title
 			self.title = player.title
-			self.seek = player.seek[:3]
+			self.seek = player.seek
 			self.album = player.album
 			self.artist = player.artist
 			self.service = player.service
@@ -109,7 +117,7 @@ class VLUBSong:
 			self.album = VLUBMSGSTATUSPAUSED
 			self.artist = player.name
 			self.bitrate = "Some Good Music"
-			self.seek = player.seek[:3]
+			self.seek = player.seek
 			self.duration = 0
 			self.url = ""
 			self.service = ""
@@ -333,7 +341,7 @@ class VLUBDisplay:
 			if self.flag and s.seek != 0:
 				self.screens[1].display_ct(s.title,s.bitrate)
 			else:
-				self.screens[1].display_ct(s.title,"-- "+sec2ms(s.seek)+" --")
+				self.screens[1].display_ct(s.title, ms2mns(int(s.seek)))
 
 	def __init__(self,*screens):
 		# nb equal the number of screens so starts at 1
