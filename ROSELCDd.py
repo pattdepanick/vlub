@@ -164,8 +164,14 @@ class VLUBPlayer():
 			if (req.ok):
 				# Loading the response data into a dict variable
 				data = json.loads(req.content)
-				self.state = str(data['status'])
-				print('TYPE: %s',type(data['title']))
+				try:
+					self.state = str(data['status'])
+				except:
+					self.state = ''
+				try:
+					print('TYPE: %s',type(data['title']))
+				except:
+					pass
 				try:
 					self.service = str(data['service'])
 				except:
@@ -341,7 +347,7 @@ class VLUBDisplay:
 			if self.flag and s.seek != 0:
 				self.screens[1].display_ct(s.title,s.bitrate)
 			else:
-				self.screens[1].display_ct(s.title, ms2mns(int(s.seek)))
+				self.screens[1].display_ct(s.title,"-- "+ms2mns(int(s.seek))+" --")
 
 	def __init__(self,*screens):
 		# nb equal the number of screens so starts at 1
