@@ -194,7 +194,10 @@ class VLUBPlayer():
 						self.album = self.service
 					else:
 						self.album = "Empty Album"
-				self.uri = unicodedata.normalize('NFKD',data['uri']).encode('ascii','ignore')
+				try:
+					self.uri = unicodedata.normalize('NFKD',data['uri']).encode('ascii','ignore')
+				except:
+					self.uri = ""
 				try:
 					self.duration = str(data['duration'])
 				except:
