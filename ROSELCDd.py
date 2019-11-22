@@ -11,8 +11,9 @@ import json
 import platform
 import configparser
 from io import BytesIO
-#from urllib2 import requests, urlopen, URLError, HTTPError;
 import requests
+# For LCD2USB type of devices
+from lcd2usb import LCD
 
 VLUBCONFFILE = "/etc/ROSELCDd.conf"
 
@@ -274,40 +275,52 @@ class VLUBScreen:
 		self.__speed = speed
 		self.__offset = 0
 		self.type = type
-		self.scr = LcdBackpack(port, speed)
+		if type == "LCD2USB":
+			self.scr = LCD()
+			self.scr.info()
+			self.__port = "USB device"
+			self.__speed = "unknown speed"
+		else:
+			self.scr = LcdBackpack(port, speed)
 		self.color = color
 		self.brightness = brightness
 		self.contrast = contrast
-		self.scr.connect()
-		self.scr.display_on()
-		#clear the screen
+		if type != "LCD2USB":
+			self.scr.connect()
+			self.scr.display_on()
+		# Clear the screen
 		self.scr.clear()
-		#set the blinking cursor to off - True for this !
-		self.scr.set_block_cursor(True)
-		#set autoscrolling to off
-		self.scr.set_autoscroll(False)
-		if type == "LCD":
+		if type != "LCD2USB":
+			#set the blinking cursor to off - True for this !
+			self.scr.set_block_cursor(True)
+			#set autoscrolling to off
+			self.scr.set_autoscroll(False)
+		if type == "LCD" or type == "LCD2USB":
 			self.scr.set_brightness(brightness)
 			self.scr.set_contrast(contrast)
+		if type == "LCD":
 			self.scr.set_backlight_rgb(color[0], color[1], color[2])
 		print("screen %d created - %dx%d on %s at %d"%(id,columns,lines,port,speed))
 	
 	# display all messages centered on a given screen line by line
 	def display_ct(self,*msg):
-		#if self.type == "OLED":
-			#for l in range(0,self.lines):
-				#print("Printing %s on line %d of screen %d"%(msg[l],l+1,self.id))
-				#self.display_line_ct(l+1,msg[l])
-		#elif self.type == "LCD":
-		for l in range(self.lines,0,-1):
-			print("Printing %s on line %d of screen %d"%(msg[self.lines-l],l,self.id))
-			self.display_line_ct(l,msg[self.lines-l])
+		if self.type == "LCD2USB":
+			for l in range(0,self.lines):
+				print("Printing %s on line %d of screen %d"%(msg[l],l+1,self.id))
+				self.display_line_ct(l,msg[l])
+		else:
+			for l in range(self.lines,0,-1):
+				print("Printing %s on line %d of screen %d"%(msg[self.lines-l],l,self.id))
+				self.display_line_ct(l,msg[self.lines-l])
 
 	# display centered on a single line of a given screen
 	def display_line_ct(self,line,text):
 		output = text.center(self.columns, ' ')
-		self.scr.set_cursor_position(1,line)
-		#set autoscrolling to correct value based on config file
+		if self.type != "LCD2USB":
+			self.scr.set_cursor_position(1,line)
+		else:
+			self.scr.goto(1,line)
+		#set autoscrolling to correct value based on config file - not for LCD2USB
 		#self.scr.set_autoscroll(False)
 		if len(output) > self.columns:
 			if VLUBMODE == "fixed":
@@ -327,8 +340,12 @@ class VLUBScreen:
 	def __del__(self):
 		print("Clearing scren %d"%self.id)
 		self.scr.clear()
-		self.scr.display_off()
-		self.scr.disconnect()
+		if self.type != "LCD2USB":
+			self.scr.display_off()
+			self.scr.disconnect()
+		else:
+			self.scr.set_brightness(0)
+			self.scr.close()
 		
 class VLUBDisplay:
 	def __display_ct__(self,*msg):
@@ -471,7 +488,7 @@ if 'Msg' in config:
 else:
 	VLUBMSGSTATUSPAUSED = DEFVLUBMSGSTATUSPAUSED
 
-# Our LCD/OLED/... Display
+# Our LCD/LCD2USB/OLED/... Display
 s = []
 for i in range(0,VLUBSCREENS):
 	s.append(VLUBScreen(i, VLUBTYPE, VLUBROWS, VLUBCOLUMNS, VLUBDEVICE+str(i), VLUBSPEED, VLUBCOLOR, VLUBBRIGHTNESS, VLUBCONTRAST))
