@@ -9,6 +9,7 @@ VLUBDIR=/home/volumio/vlub
 apt-get install -y vim python-pip python-configparser dos2unix file unzip imagemagick
 pip install python-mpd2
 pip install pyserial
+pip install lcd2usb
 pip install --pre lcdbackpack
 systemctl disable graphical.target
 systemctl set-default multi-user.target
