@@ -26,10 +26,10 @@
 # Installation Process
 
 - Connect through ssh to volumio (using putty client for instance)
-- launch from the current shell the git clone command to clone the current repo. It will create a vlub directory in which all necessary files are present
-- the command is the following one: git clone https://github.com/pattdepanick/vlub
+- launch from the current shell the git clone command to clone the current repo. It will create a vlub directory in which all necessary files are present.
+  the command is the following one: git clone https://github.com/pattdepanick/vlub
 - Enter the vlub directory by issuing the cd command: cd vlub
-- launch setup.sh using sudo: sudo ./install.sh
+- launch install.sh using sudo: sudo ./install.sh
 - Enter volumio password for sudo command
 - Basics on vi can be found here: http://www.lagmonster.org/docs/vi.html 
 - reboot
