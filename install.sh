@@ -21,8 +21,8 @@ systemctl disable volumio-kiosk
 # Setup ROSELCD
 #dos2unix $VLUBDIR/ROSELCDd.py
 chmod 755 $VLUBDIR/ROSELCDd.py
-#ln -sf $VLUBDIR/volumio-lcd.service /lib/systemd/system
-install -m 0755 $VLUBDIR/volumio-lcd.service /lib/systemd/system
+#ln -sf $VLUBDIR/volumio-lcd.service /etc/systemd/system
+install -m 0755 $VLUBDIR/volumio-lcd.service /etc/systemd/system
 # Detect local screens to improve default conf
 nb=`ls /dev/ttyACM* | wc -l`
 if [ _"$nb" != _"" ] && [ $nb -gt 0 ]; then
