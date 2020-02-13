@@ -23,6 +23,7 @@ systemctl disable volumio-kiosk
 chmod 755 $VLUBDIR/ROSELCDd.py
 #ln -sf $VLUBDIR/volumio-lcd.service /etc/systemd/system
 install -m 0755 $VLUBDIR/volumio-lcd.service /etc/systemd/system
+install -m 0644 $VLUBDIR/99-Volumio-lcd.rules /etc/udev/rules.d/
 # Detect local screens to improve default conf
 nb=`ls /dev/ttyACM* | wc -l`
 if [ _"$nb" != _"" ] && [ $nb -gt 0 ]; then
