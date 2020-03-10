@@ -6,6 +6,7 @@ set -x
 VLUBDIR=/home/volumio/vlub
 
 # Setup system
+apt update -y
 apt-get install -y vim python-pip python-configparser dos2unix file unzip imagemagick
 pip install python-mpd2
 pip install pyserial
