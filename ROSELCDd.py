@@ -355,19 +355,29 @@ class VLUBDisplay:
 		# Display msg based on number of screens
 		if self.nb == 1:
 			# If we have 1 screen, we limit the display to title and artist then rotate with album and bit rate
-			if self.flag:
-				self.screens[0].display_ct(s.artist,s.album)
+			if self.screens[0].lines >= 4:
+				# We can print everything directly
+				self.screens[0].display_ct(s.artist,s.album,s.title,s.bitrate)
 			else:
-				self.screens[0].display_ct(s.title,s.bitrate)
+				if self.flag:
+					self.screens[0].display_ct(s.artist,s.album)
+				else:
+					self.screens[0].display_ct(s.title,s.bitrate)
 		if self.nb == 2:
 			# If we have 2 screens, we limit the display to title and artist + album and bit rate
 			# TODO: externalyze in a table the allocation of fields into spaces
-			self.screens[0].display_ct(s.artist,s.album)
-			# If we have 2 screens, we rotate betwwen elapsed time and bit rate if seek exists
-			if self.flag and s.seek != 0:
-				self.screens[1].display_ct(s.title,s.bitrate)
+			if self.screens[0].lines >= 4:
+				# We can print everything directly
+				self.screens[0].display_ct(s.artist,s.album,s.title,s.bitrate)
+				# We can display more ...
+				self.screens[1].display_ct("-- "+ms2mns(int(s.seek))+" --")
 			else:
-				self.screens[1].display_ct(s.title,"-- "+ms2mns(int(s.seek))+" --")
+				self.screens[0].display_ct(s.artist,s.album)
+				# If we have 2 screens, we rotate between elapsed time and bit rate if seek exists
+				if self.flag and s.seek != 0:
+					self.screens[1].display_ct(s.title,s.bitrate)
+				else:
+					self.screens[1].display_ct(s.title,"-- "+ms2mns(int(s.seek))+" --")
 
 	def __init__(self,*screens):
 		# nb equal the number of screens so starts at 1
