@@ -39,22 +39,22 @@ def handler(signum, frame):
 signal.signal(signal.SIGINT, handler)
 
 def sec2ms(sec):
-    """Transforms seconds sec into a printable chain "mm:ss" """
-    """Inspired from http://python.jpvweb.com/python/mesrecettespython/doku.php?id=compte_a_rebours """
-    m=0
-    s=int(sec)
-    if s >= 60:
-        m = s//60
-        s -= m*60
-    return "%02d:%02d" % (m, s)
+	"""Transforms seconds sec into a printable chain "mm:ss" """
+	"""Inspired from http://python.jpvweb.com/python/mesrecettespython/doku.php?id=compte_a_rebours """
+	m=0
+	s=int(sec)
+	if s >= 60:
+		m = s//60
+		s -= m*60
+	return "%02d:%02d" % (m, s)
 
 def ms2mns(millis):
-        """Transforms milliseconds sec into a printable chain "mm:ss" """
-        """Inspired from https://stackoverflow.com/questions/35989666/convert-milliseconds-to-hours-min-and-seconds-python"""
-        s =(millis/1000)%60
-        m =(millis/(1000*60))%60
-        h =(millis/(1000*60*60))%24
-        return "%02d:%02d" % (m, s)
+		"""Transforms milliseconds sec into a printable chain "mm:ss" """
+		"""Inspired from https://stackoverflow.com/questions/35989666/convert-milliseconds-to-hours-min-and-seconds-python"""
+		s =(millis/1000)%60
+		m =(millis/(1000*60))%60
+		h =(millis/(1000*60*60))%24
+		return "%02d:%02d" % (m, s)
 
 class VLUBSong:
 	def __init__(self,player):
@@ -227,10 +227,10 @@ class VLUBPlayer():
 class VLUBMPDPlayer(MPDClient):
 	def __init__(self):
 		print("Creating object VLUBplayer on %s:%s"%(VLUBMPDHOST,VLUBMPDPORT))
-		client = MPDClient()               # create client object
-		client.timeout = None              # network timeout in seconds (floats allowed), default: None
-		client.use_unicode = True          # Can be switched back later
-		client.idletimeout = None          # timeout for fetching the result of the idle command is handled seperately, default:$
+		client = MPDClient()				# create client object
+		client.timeout = None				# network timeout in seconds (floats allowed), default: None
+		client.use_unicode = True			# Can be switched back later
+		client.idletimeout = None			# timeout for fetching the result of the idle command is handled seperately, default:$
 		client.connect(VLUBMPDHOST, VLUBMPDPORT)
 		# Required so that fetch/send_idle methods work on a VLUBPlayer object
 		for atr in dir(client):
