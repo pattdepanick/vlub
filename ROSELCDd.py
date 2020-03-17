@@ -266,22 +266,22 @@ class VLUBMPDPlayer(MPDClient):
 		self.get_status()
 
 class VLUBScreen:
-	def __init__(self,id,type,lines,columns,port,speed,color,brightness,contrast):
+	def __init__(self,id,type,lines,columns,device,speed,color,brightness,contrast):
 		print("Creating object VLUBScreen %s",id)
 		self.id = id
 		self.lines = lines
 		self.columns = columns
-		self.__port = port
+		self.__device = device
 		self.__speed = speed
 		self.__offset = 0
 		self.type = type
 		if type == "LCD2USB":
 			self.scr = LCD()
 			self.scr.info()
-			self.__port = "USB device"
+			self.__device = "USB device"
 			self.__speed = "unknown speed"
 		else:
-			self.scr = LcdBackpack(port, speed)
+			self.scr = LcdBackpack(device, speed)
 		self.color = color
 		self.brightness = brightness
 		self.contrast = contrast
@@ -300,7 +300,7 @@ class VLUBScreen:
 			self.scr.set_contrast(contrast)
 		if type == "LCD":
 			self.scr.set_backlight_rgb(color[0], color[1], color[2])
-		print("screen %d created - %dx%d on %s at %d"%(id,columns,lines,port,speed))
+		print("screen %d created - %dx%d on %s at %d"%(id,columns,lines,self.__device,self.__speed))
 	
 	# display all messages centered on a given screen line by line
 	def display_ct(self,*msg):
