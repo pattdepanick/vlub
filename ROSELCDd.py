@@ -267,7 +267,7 @@ class VLUBMPDPlayer(MPDClient):
 
 class VLUBScreen:
 	def __init__(self,id,type,lines,columns,device,speed,color,brightness,contrast):
-		print("Creating object VLUBScreen %s",id)
+		print("Creating object VLUBScreen %s"%id)
 		self.id = id
 		self.lines = lines
 		self.columns = columns
