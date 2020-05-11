@@ -39,22 +39,22 @@ def handler(signum, frame):
 signal.signal(signal.SIGINT, handler)
 
 def sec2ms(sec):
-    """Transforms seconds sec into a printable chain "mm:ss" """
-    """Inspired from http://python.jpvweb.com/python/mesrecettespython/doku.php?id=compte_a_rebours """
-    m=0
-    s=int(sec)
-    if s >= 60:
-        m = s//60
-        s -= m*60
-    return "%02d:%02d" % (m, s)
+	"""Transforms seconds sec into a printable chain "mm:ss" """
+	"""Inspired from http://python.jpvweb.com/python/mesrecettespython/doku.php?id=compte_a_rebours """
+	m=0
+	s=int(sec)
+	if s >= 60:
+		m = s//60
+		s -= m*60
+	return "%02d:%02d" % (m, s)
 
 def ms2mns(millis):
-        """Transforms milliseconds sec into a printable chain "mm:ss" """
-        """Inspired from https://stackoverflow.com/questions/35989666/convert-milliseconds-to-hours-min-and-seconds-python"""
-        s =(millis/1000)%60
-        m =(millis/(1000*60))%60
-        h =(millis/(1000*60*60))%24
-        return "%02d:%02d" % (m, s)
+		"""Transforms milliseconds sec into a printable chain "mm:ss" """
+		"""Inspired from https://stackoverflow.com/questions/35989666/convert-milliseconds-to-hours-min-and-seconds-python"""
+		s =(millis/1000)%60
+		m =(millis/(1000*60))%60
+		h =(millis/(1000*60*60))%24
+		return "%02d:%02d" % (m, s)
 
 class VLUBSong:
 	def __init__(self,player):
@@ -227,10 +227,10 @@ class VLUBPlayer():
 class VLUBMPDPlayer(MPDClient):
 	def __init__(self):
 		print("Creating object VLUBplayer on %s:%s"%(VLUBMPDHOST,VLUBMPDPORT))
-		client = MPDClient()               # create client object
-		client.timeout = None              # network timeout in seconds (floats allowed), default: None
-		client.use_unicode = True          # Can be switched back later
-		client.idletimeout = None          # timeout for fetching the result of the idle command is handled seperately, default:$
+		client = MPDClient()				# create client object
+		client.timeout = None				# network timeout in seconds (floats allowed), default: None
+		client.use_unicode = True			# Can be switched back later
+		client.idletimeout = None			# timeout for fetching the result of the idle command is handled seperately, default:$
 		client.connect(VLUBMPDHOST, VLUBMPDPORT)
 		# Required so that fetch/send_idle methods work on a VLUBPlayer object
 		for atr in dir(client):
@@ -266,22 +266,22 @@ class VLUBMPDPlayer(MPDClient):
 		self.get_status()
 
 class VLUBScreen:
-	def __init__(self,id,type,lines,columns,port,speed,color,brightness,contrast):
-		print("Creating object VLUBScreen %s",id)
+	def __init__(self,id,type,lines,columns,device,speed,color,brightness,contrast):
+		print("Creating object VLUBScreen %s"%id)
 		self.id = id
 		self.lines = lines
 		self.columns = columns
-		self.__port = port
+		self.__device = device
 		self.__speed = speed
 		self.__offset = 0
 		self.type = type
 		if type == "LCD2USB":
 			self.scr = LCD()
 			self.scr.info()
-			self.__port = "USB device"
+			self.__device = "USB device"
 			self.__speed = "unknown speed"
 		else:
-			self.scr = LcdBackpack(port, speed)
+			self.scr = LcdBackpack(device, speed)
 		self.color = color
 		self.brightness = brightness
 		self.contrast = contrast
@@ -300,7 +300,7 @@ class VLUBScreen:
 			self.scr.set_contrast(contrast)
 		if type == "LCD":
 			self.scr.set_backlight_rgb(color[0], color[1], color[2])
-		print("screen %d created - %dx%d on %s at %d"%(id,columns,lines,port,speed))
+		print("screen %d created - %dx%d on %s at %d"%(id,columns,lines,self.__device,self.__speed))
 	
 	# display all messages centered on a given screen line by line
 	def display_ct(self,*msg):
@@ -355,19 +355,29 @@ class VLUBDisplay:
 		# Display msg based on number of screens
 		if self.nb == 1:
 			# If we have 1 screen, we limit the display to title and artist then rotate with album and bit rate
-			if self.flag:
-				self.screens[0].display_ct(s.artist,s.album)
+			if self.screens[0].lines >= 4:
+				# We can print everything directly
+				self.screens[0].display_ct(s.artist,s.album,s.title,s.bitrate)
 			else:
-				self.screens[0].display_ct(s.title,s.bitrate)
+				if self.flag:
+					self.screens[0].display_ct(s.artist,s.album)
+				else:
+					self.screens[0].display_ct(s.title,s.bitrate)
 		if self.nb == 2:
 			# If we have 2 screens, we limit the display to title and artist + album and bit rate
 			# TODO: externalyze in a table the allocation of fields into spaces
-			self.screens[0].display_ct(s.artist,s.album)
-			# If we have 2 screens, we rotate betwwen elapsed time and bit rate if seek exists
-			if self.flag and s.seek != 0:
-				self.screens[1].display_ct(s.title,s.bitrate)
+			if self.screens[0].lines >= 4:
+				# We can print everything directly
+				self.screens[0].display_ct(s.artist,s.album,s.title,s.bitrate)
+				# We can display more ...
+				self.screens[1].display_ct("-- "+ms2mns(int(s.seek))+" --")
 			else:
-				self.screens[1].display_ct(s.title,"-- "+ms2mns(int(s.seek))+" --")
+				self.screens[0].display_ct(s.artist,s.album)
+				# If we have 2 screens, we rotate between elapsed time and bit rate if seek exists
+				if self.flag and s.seek != 0:
+					self.screens[1].display_ct(s.title,s.bitrate)
+				else:
+					self.screens[1].display_ct(s.title,"-- "+ms2mns(int(s.seek))+" --")
 
 	def __init__(self,*screens):
 		# nb equal the number of screens so starts at 1
@@ -486,6 +496,7 @@ if 'Msg' in config:
 	VLUBMSGSTATUSSTOPPED = str(msg.get('Status Stopped', DEFVLUBMSGSTATUSSTOPPED))
 	VLUBMSGSTATUSPAUSED = str(msg.get('Status Paused', DEFVLUBMSGSTATUSPAUSED))
 else:
+	VLUBMSGSTATUSSTOPPED = DEFVLUBMSGSTATUSSTOPPED
 	VLUBMSGSTATUSPAUSED = DEFVLUBMSGSTATUSPAUSED
 
 # Our LCD/LCD2USB/OLED/... Display
