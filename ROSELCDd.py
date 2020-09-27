@@ -279,7 +279,8 @@ class VLUBScreen:
 			self.scr = LCD()
 			self.scr.info()
 			self.__device = "USB device"
-			self.__speed = "unknown speed"
+			#self.__speed = "unknown speed"
+			self.__speed = 0
 		else:
 			self.scr = LcdBackpack(device, speed)
 		self.color = color
@@ -319,7 +320,7 @@ class VLUBScreen:
 		if self.type != "LCD2USB":
 			self.scr.set_cursor_position(1,line)
 		else:
-			self.scr.goto(1,line)
+			self.scr.goto(0,line)
 		#set autoscrolling to correct value based on config file - not for LCD2USB
 		#self.scr.set_autoscroll(False)
 		if len(output) > self.columns:
@@ -393,7 +394,7 @@ class VLUBDisplay:
 			else:
 				name = "Musical streamer"
 			
-			self.screens[i].display_ct(name,"Starting on %d"%i)
+			self.screens[i].display_ct(name,"Starting on screen %d"%i, "", "")
 
 	def __del__(self):
 		print("Clearing display")
@@ -493,8 +494,8 @@ else:
 
 if 'Msg' in config:
 	msg = config['Msg']
-	VLUBMSGSTATUSSTOPPED = str(msg.get('Status Stopped', DEFVLUBMSGSTATUSSTOPPED))
-	VLUBMSGSTATUSPAUSED = str(msg.get('Status Paused', DEFVLUBMSGSTATUSPAUSED))
+	VLUBMSGSTATUSSTOPPED = str(msg.get('statusstopped', DEFVLUBMSGSTATUSSTOPPED))
+	VLUBMSGSTATUSPAUSED = str(msg.get('statuspaused', DEFVLUBMSGSTATUSPAUSED))
 else:
 	VLUBMSGSTATUSSTOPPED = DEFVLUBMSGSTATUSSTOPPED
 	VLUBMSGSTATUSPAUSED = DEFVLUBMSGSTATUSPAUSED
