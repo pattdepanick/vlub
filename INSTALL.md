@@ -29,6 +29,10 @@
 - launch from the current shell the git clone command to clone the current repo. It will create a vlub directory in which all necessary files are present.
   the command is the following one: git clone https://github.com/pattdepanick/vlub
 - Enter the vlub directory by issuing the cd command: cd vlub
+- Install vi : sudo apt install vim
+- Enter volumio password for sudo command
+- Edit the ROSELCDd.conf to adapt your display type (adafruit, LCD2USB, or Matrix Orbital)
+- vi ROSELCDd.conf
 - launch install.sh using sudo: sudo ./install.sh
 - Enter volumio password for sudo command
 - Basics on vi can be found here: http://www.lagmonster.org/docs/vi.html 
