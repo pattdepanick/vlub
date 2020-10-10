@@ -8,7 +8,7 @@
 # Configuration
 
 - In addition to the installer, a configuration file is now available to customize additionnal settings related to LCDs
-- The file ROSELCDd.conf allows you to select the color, the brightness qnd the constrast of the LCD
+- The file ROSELCDd.conf allows you to select the color, the brightness and the constrast of the LCD
 - Defaults are the following:
 	- color = 255, 255, 255 
 	- brightness =  220
