@@ -10,6 +10,9 @@ apt update -y
 apt-get install -y vim python-pip python-configparser dos2unix file unzip imagemagick
 pip install python-mpd2
 pip install pyserial
+pip install requests
+pip install Enum
+pip install libusb1==1.9.2
 pip install lcd2usb
 pip install --pre lcdbackpack
 systemctl disable graphical.target
